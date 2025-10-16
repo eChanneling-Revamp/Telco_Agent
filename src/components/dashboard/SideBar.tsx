@@ -59,7 +59,7 @@ const SideBar = () => {
       </div>
 
       <div className="px-8 flex-1">
-        <NavLink href="/">
+        <NavLink href="/dashboard">
           <Home size={20} />
           <span>Dashboard</span>
         </NavLink>

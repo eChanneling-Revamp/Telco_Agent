@@ -96,11 +96,11 @@ const DirectoryPage: React.FC = () => {
               placeholder="Search for hospitals, pharmacies, or locations"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              className="w-full border border-gray-300 rounded-md p-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
             />
 
-            {/* Tabs */}
-            <div className="flex gap-3 mb-4">
+            {/* Tabs styled like image */}
+            <div className="flex gap-8 mb-4 border-b border-gray-200 pb-1">
               {["All", "Hospitals", "Pharmacies"].map((tab) => {
                 const filterValue =
                   tab === "All"
@@ -116,13 +116,16 @@ const DirectoryPage: React.FC = () => {
                     onClick={() =>
                       setFilter(filterValue as "All" | "Hospital" | "Pharmacy")
                     }
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                    className={`relative pb-1 text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "text-green-500"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
                     {tab}
+                    {isActive && (
+                      <span className="absolute left-0 bottom-0 w-full h-[2px] bg-green-300 rounded-full"></span>
+                    )}
                   </button>
                 );
               })}
@@ -136,48 +139,73 @@ const DirectoryPage: React.FC = () => {
                     key={loc.id}
                     className={`p-4 rounded-lg border transition cursor-pointer flex flex-col justify-between ${
                       selected?.id === loc.id
-                        ? "bg-blue-100 border-blue-400"
+                        ? "bg-green-50 border-green-300"
                         : "bg-white hover:bg-gray-50"
                     }`}
                     onClick={() => setSelected(loc)}
                   >
                     {/* Header: Icon + Name */}
-                    <div className="flex items-center gap-2 mb-1">
-                      {loc.type === "Hospital" ? (
-                        <FaHospital
-                          className={`text-base ${
-                            selected?.id === loc.id
-                              ? "text-blue-600"
-                              : "text-blue-500"
-                          }`}
-                        />
-                      ) : (
-                        <FaPrescriptionBottleAlt
-                          className={`text-base ${
-                            selected?.id === loc.id
-                              ? "text-green-600"
-                              : "text-green-500"
-                          }`}
-                        />
-                      )}
-                      <h3 className="font-semibold text-gray-800 text-sm">
-                        {loc.name}
-                      </h3>
+                    <div className="flex items-center gap-3 mb-1">
+                      <div
+                        className={`w-10 h-10 flex items-center justify-center rounded-full ${
+                          loc.type === "Hospital"
+                            ? "bg-blue-100"
+                            : "bg-green-100"
+                        }`}
+                      >
+                        {loc.type === "Hospital" ? (
+                          <FaHospital
+                            className={`text-lg ${
+                              loc.type === "Hospital"
+                                ? "text-blue-600"
+                                : "text-green-600"
+                            }`}
+                          />
+                        ) : (
+                          <FaPrescriptionBottleAlt className="text-lg text-green-600" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800 text-sm">
+                          {loc.name}
+                        </h3>
+                        <p className="text-xs text-gray-500">{loc.address}</p>
+                      </div>
                     </div>
 
-                    {/* Address */}
-                    <p className="text-xs text-gray-600 pl-6 mb-1">
-                      {loc.address}
-                    </p>
-
                     {/* Contact */}
-                    <div className="flex items-center gap-1 text-xs text-gray-500 pl-6 mb-2">
+                    <div className="flex items-center gap-1 text-xs text-gray-500 pl-12 mb-2">
                       <FaPhoneAlt className="text-[10px]" />
                       <span>{loc.contact}</span>
                     </div>
 
-                    {/* View Details - bottom right */}
-                    <div className="flex justify-end mt-auto">
+                    {/* --- CHANGED: For Pharmacy show Open Hours instead of specialties --- */}
+                    {loc.type === "Hospital" ? (
+                      <div className="flex flex-wrap gap-2 pl-12 mb-2">
+                        {["Cardiology", "Neurology", "Orthopedics"].map(
+                          (specialty) => (
+                            <span
+                              key={specialty}
+                              className="px-2 py-1 bg-blue-50 text-blue-700 text-[11px] font-medium rounded-full border border-blue-100"
+                            >
+                              {specialty}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    ) : (
+                      <div className="pl-12 mb-2 text-xs text-gray-600">
+                        <p>
+                          <span className="font-xs text-gray-800 mr-1">
+                            Hours:
+                          </span>
+                          8:00 AM - 10:00 PM
+                        </p>
+                      </div>
+                    )}
+
+                    {/* View Details button */}
+                    <div className="flex justify-end">
                       <button
                         className="text-blue-600 text-xs font-medium hover:underline"
                         onClick={(e) => {
@@ -223,32 +251,50 @@ const DirectoryPage: React.FC = () => {
                 {/* Info */}
                 <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm space-y-4 text-sm text-gray-700">
                   <div>
-                    <p className="font-semibold text-gray-800">Address:</p>
+                    <p className="font-xs text-gray-800">Address:</p>
                     <p className="pl-2 text-gray-600">{selected.address}</p>
                   </div>
 
                   <div>
-                    <p className="font-semibold text-gray-800">Contact:</p>
+                    <p className="font-xs text-gray-800">Contact:</p>
                     <p className="pl-2 text-gray-600">{selected.contact}</p>
                   </div>
 
-                  <div>
-                    <p className="font-semibold text-gray-800">Specialties:</p>
-                    <p className="pl-2 text-gray-600">
-                      Cardiology, Neurology, Orthopedics
-                    </p>
-                  </div>
+                  {selected.type === "Hospital" ? (
+                    <div>
+                      <p className="font-xs text-gray-800 mb-1">
+                        Specialties:
+                      </p>
+                      <div className="flex flex-wrap gap-2 pl-2">
+                        {["Cardiology", "Neurology", "Orthopedics"].map(
+                          (specialty) => (
+                            <span
+                              key={specialty}
+                              className="px-2 py-1 bg-blue-50 text-blue-700 text-[11px] font-medium rounded-full border border-blue-100"
+                            >
+                              {specialty}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="font-semibold text-gray-800">Hours:</p>
+                      <p className="pl-2 text-gray-600">8:00 AM - 10:00 PM</p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Buttons */}
+                {/* Buttons (aligned right) */}
                 <div className="flex justify-end gap-3 mt-5">
-                  <button className="flex items-center gap-2 bg-white hover:bg-blue-600 hover:text-white text-black text-sm font-medium py-2 px-3 rounded-md transition-all shadow-sm">
+                  <button className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-blue-700 transition-all">
                     <FaPhoneAlt className="text-xs" />
                     Call Now
                   </button>
-                  <button className="flex items-center gap-2 border border-white text-black hover:bg-blue-50 text-sm font-medium py-2 px-3 rounded-md transition-all shadow-sm">
-                    <FaMapMarkerAlt className="text-xs text-black" />
-                    Directory
+                  <button className="flex items-center gap-2 bg-gray-200 text-gray-800 text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-gray-300 transition-all">
+                    <FaMapMarkerAlt className="text-xs" />
+                    Directions
                   </button>
                 </div>
               </>

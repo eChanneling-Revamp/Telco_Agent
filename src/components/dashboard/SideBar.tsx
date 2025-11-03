@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -64,12 +65,12 @@ const SideBar = () => {
           <span>Dashboard</span>
         </NavLink>
 
-        <NavLink href="/appointment-booking">
+        <NavLink href="/AppointmentBooking">
           <Calendar size={20} />
           <span>Appointment Booking</span>
         </NavLink>
 
-        <NavLink href="/appointment-management">
+        <NavLink href="/Appointments">
           <ClipboardList size={20} />
           <span>Appointment Management</span>
         </NavLink>

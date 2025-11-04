@@ -120,10 +120,43 @@ const ReportsPage: React.FC = () => {
             </ResponsiveContainer>
           </div>
 
-          
+          {/* Monthly Trends */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Monthly Trends
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="bookings"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cancellations"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        
+        {/* Export Buttons */}
+        <div className="flex justify-end gap-3 mb-6">
+          <button className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md shadow-sm hover:bg-gray-100 text-sm">
+            <FaFilePdf className="text-red-500" /> Export PDF
+          </button>
+          <button className="flex items-center gap-2 px-3 py-2 bg-white text-gray-700 rounded-md shadow-sm hover:bg-gray-100 text-sm">
+            <FaFileExcel className="text-green-500" /> Export Excel
+          </button>
+        </div>
 
         
 

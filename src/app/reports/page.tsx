@@ -158,7 +158,28 @@ const ReportsPage: React.FC = () => {
           </button>
         </div>
 
-        
+        {/* Recent Activity */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Recent Activity
+          </h3>
+          <div className="space-y-3">
+            {recentActivity.map((item) => (
+              <div
+                key={item.id}
+                className="flex justify-between items-center border-b border-gray-100 pb-2"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-gray-500">{item.details}</p>
+                </div>
+                <p className="text-xs text-gray-400">{item.time}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <footer className="text-xs text-gray-500 mt-6 text-center">
           © 2025 Sri Lanka Telecom eChanneling

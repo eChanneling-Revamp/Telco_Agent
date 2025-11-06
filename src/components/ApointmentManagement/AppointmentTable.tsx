@@ -12,11 +12,13 @@ type Appointment = {
 type AppointmentTableProps = {
   appointments?: Appointment[];
   getStatusColor?: (status: string) => string;
+
   currentPage?: number;
   totalAppointments?: number;
   appointmentsPerPage?: number;
   onPreviousPage?: () => void;
   onNextPage?: () => void;
+
 };
 
 const defaultGetStatusColor = (status: string) => {
@@ -93,6 +95,7 @@ export default function AppointmentTable({
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+
       <div className="overflow-x-auto">
         <table className="w-full bg-white">
           <thead>
@@ -191,6 +194,15 @@ export default function AppointmentTable({
           </button>
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  if (inline) {
+    // render only inner table area so caller can wrap it in a single card with filters
+    return <div className="">{tableInner}</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden">{tableInner}</div>
   );
 }

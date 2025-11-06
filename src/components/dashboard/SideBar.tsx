@@ -31,7 +31,7 @@ const SideBar = () => {
         className={`flex items-center gap-3 p-2 rounded-lg transition-colors duration-200 
           ${
             isActive
-              ? "bg-gradient-to-r from-green-300 to-indigo-400"
+              ? "bg-gradient-to-r from-green-400 to-blue-600"
               : "hover:bg-white/20"
           }`}
       >

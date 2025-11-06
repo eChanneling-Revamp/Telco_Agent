@@ -40,14 +40,14 @@ export default function DoctorSearch({ onSelectDoctor }: { onSelectDoctor: (d: D
   }, [search, specialization, hospitalType, city, date]);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-black">
       {/* Search Input */}
       <input
         type="text"
         placeholder="Search by name, hospital, or specialty..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B60E0]"
+        className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B60E0] "
       />
 
       {/* Filters in 2x2 grid */}

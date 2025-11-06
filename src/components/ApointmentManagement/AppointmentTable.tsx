@@ -1,4 +1,4 @@
-import { Eye, X, RotateCcw } from 'lucide-react';
+import { Eye, X, RotateCcw } from "lucide-react";
 
 type Appointment = {
   id: number;
@@ -6,76 +6,94 @@ type Appointment = {
   doctor: string;
   date: string;
   time: string;
-  status: 'Confirmed' | 'Cancelled' | 'Pending';
+  status: "Confirmed" | "Cancelled" | "Pending";
 };
 
 type AppointmentTableProps = {
   appointments?: Appointment[];
   getStatusColor?: (status: string) => string;
-  inline?: boolean; // when true, skip the outer card wrapper so it can be combined with filters
+
+  currentPage?: number;
+  totalAppointments?: number;
+  appointmentsPerPage?: number;
+  onPreviousPage?: () => void;
+  onNextPage?: () => void;
+
 };
 
 const defaultGetStatusColor = (status: string) => {
   switch (status) {
-    case 'Confirmed':
-      return 'bg-green-100 text-green-700';
-    case 'Cancelled':
-      return 'bg-red-100 text-red-700';
-    case 'Pending':
-      return 'bg-yellow-100 text-yellow-700';
+    case "Confirmed":
+      return "bg-green-100 text-green-700";
+    case "Cancelled":
+      return "bg-red-100 text-red-700";
+    case "Pending":
+      return "bg-yellow-100 text-yellow-700";
     default:
-      return 'bg-gray-100 text-gray-700';
+      return "bg-gray-100 text-gray-700";
   }
 };
 
 const defaultAppointments: Appointment[] = [
   {
     id: 1,
-    patientName: 'John Doe',
-    doctor: 'Dr. Sarah Wilson',
-    date: '2025-05-15',
-    time: '10:00 AM',
-    status: 'Confirmed',
+    patientName: "Nimal Perera",
+    doctor: "Dr. Kumari Wickramasinghe",
+    date: "2025-05-15",
+    time: "10:00 AM",
+    status: "Confirmed",
   },
   {
     id: 2,
-    patientName: 'Mary Smith',
-    doctor: 'Dr. James Brown',
-    date: '2025-05-15',
-    time: '11:45 AM',
-    status: 'Cancelled',
+    patientName: "Sanduni Fernando",
+    doctor: "Dr. Ranil Jayawardena",
+    date: "2025-05-15",
+    time: "11:45 AM",
+    status: "Cancelled",
   },
   {
     id: 3,
-    patientName: 'Robert Johnson',
-    doctor: 'Dr. Emily Clark',
-    date: '2025-05-16',
-    time: '09:30 AM',
-    status: 'Confirmed',
+    patientName: "Kamal Silva",
+    doctor: "Dr. Chamari Dissanayake",
+    date: "2025-05-16",
+    time: "09:30 AM",
+    status: "Confirmed",
   },
   {
     id: 4,
-    patientName: 'Patricia Williams',
-    doctor: 'Dr. Michael Lee',
-    date: '2025-05-16',
-    time: '02:15 PM',
-    status: 'Pending',
+    patientName: "Dilani Rathnayake",
+    doctor: "Dr. Prasanna Gunasekara",
+    date: "2025-05-16",
+    time: "02:15 PM",
+    status: "Pending",
   },
   {
     id: 5,
-    patientName: 'Jennifer Davis',
-    doctor: 'Dr. David Chen',
-    date: '2025-05-17',
-    time: '10:30 AM',
-    status: 'Confirmed',
+    patientName: "Ruwan Mendis",
+    doctor: "Dr. Sachini Amarasinghe",
+    date: "2025-05-17",
+    time: "10:30 AM",
+    status: "Confirmed",
   },
 ];
 
-export default function AppointmentTable({ 
-  appointments = defaultAppointments, 
+export default function AppointmentTable({
+  appointments = defaultAppointments,
   getStatusColor = defaultGetStatusColor,
+  currentPage = 1,
+  totalAppointments = 0,
+  appointmentsPerPage = 8,
+  onPreviousPage,
+  onNextPage,
   inline = false,
-}: AppointmentTableProps) {
+}: AppointmentTableProps & { inline?: boolean }) {
+  const totalPages = Math.ceil(totalAppointments / appointmentsPerPage);
+  const startIndex = (currentPage - 1) * appointmentsPerPage + 1;
+  const endIndex = Math.min(
+    currentPage * appointmentsPerPage,
+    totalAppointments
+  );
+
   const tableInner = (
     <>
       <div className="overflow-x-auto">
@@ -105,8 +123,12 @@ export default function AppointmentTable({
           <tbody className="divide-y divide-gray-100">
             {appointments.map((apt) => (
               <tr key={apt.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-6 text-sm text-gray-900">{apt.patientName}</td>
-                <td className="px-6 py-6 text-sm text-gray-900">{apt.doctor}</td>
+                <td className="px-6 py-6 text-sm text-gray-900">
+                  {apt.patientName}
+                </td>
+                <td className="px-6 py-6 text-sm text-gray-900">
+                  {apt.doctor}
+                </td>
                 <td className="px-6 py-6 text-sm text-gray-600">{apt.date}</td>
                 <td className="px-6 py-6 text-sm text-gray-600">{apt.time}</td>
                 <td className="px-6 py-6">
@@ -126,7 +148,7 @@ export default function AppointmentTable({
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    {apt.status === 'Cancelled' ? (
+                    {apt.status === "Cancelled" ? (
                       <button
                         className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition"
                         title="Reschedule"
@@ -151,10 +173,24 @@ export default function AppointmentTable({
 
       {/* Pagination */}
       <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
-        <p className="text-sm text-gray-600">Showing {appointments.length} of 24 appointments</p>
+        <p className="text-sm text-gray-600">
+          Showing {totalAppointments > 0 ? startIndex : 0} to {endIndex} of{" "}
+          {totalAppointments} appointments
+        </p>
         <div className="flex gap-2">
-          <button className="px-4 py-2 text-sm border border-gray-300 bg-white rounded-lg hover:bg-gray-50 transition">
+          <button
+            onClick={onPreviousPage}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm border border-gray-300 bg-white rounded-lg hover:bg-gray-50 text-black "
+          >
             Previous
+          </button>
+          <button
+            onClick={onNextPage}
+            disabled={currentPage >= totalPages}
+            className="px-4 py-2 text-sm border border-gray-300 bg-linear-65 from-green-500 to-blue-800 text-white hover:bg-teal-700  rounded-lg"
+          >
+            Next
           </button>
         </div>
       </div>

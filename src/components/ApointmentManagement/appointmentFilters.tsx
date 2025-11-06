@@ -8,6 +8,7 @@ type AppointmentFiltersProps = {
   setSelectedStatus: (value: string) => void;
   selectedDate: string;
   setSelectedDate: (value: string) => void;
+  compact?: boolean;
 };
 
 export default function AppointmentFilters({
@@ -17,9 +18,12 @@ export default function AppointmentFilters({
   setSelectedStatus,
   selectedDate,
   setSelectedDate,
+  compact = false,
 }: AppointmentFiltersProps) {
+  const containerClass = compact ? "p-4" : "p-4 bg-white border-b shadow-sm";
+
   return (
-    <div className="p-4 bg-white border-b shadow-sm">
+    <div className={containerClass}>
       <div className="flex flex-wrap items-center gap-3">
         {/*  Search */}
         <div className="flex-1 relative min-w-[220px]">

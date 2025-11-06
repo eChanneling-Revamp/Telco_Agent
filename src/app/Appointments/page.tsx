@@ -58,16 +58,19 @@ export default function Page() {
         />
         <div className="p-8 max-w-7xl mx-auto">
           <Breadcrumb />
-          <AppointmentFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            selectedStatus={selectedStatus}
-            setSelectedStatus={setSelectedStatus}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <AppointmentFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              selectedStatus={selectedStatus}
+              setSelectedStatus={setSelectedStatus}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              compact
+            />
 
-          <AppointmentTable appointments={filteredAppointments} getStatusColor={getStatusColor} />
+            <AppointmentTable appointments={filteredAppointments} getStatusColor={getStatusColor} inline />
+          </div>
         </div>
       </main>
     </div>

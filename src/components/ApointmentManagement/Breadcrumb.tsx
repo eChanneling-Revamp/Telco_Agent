@@ -1,13 +1,13 @@
 "use client";
 
-export default function Breadcrumb() {
+export default function Breadcrumb({ current = "Appointment Management" }: { current?: string }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
+    <div className="flex items-center justify-start h-12 mb-4">
       {/* 🔹 Breadcrumb Section */}
-      <div className="flex items-center text-sm text-white space-x-2">
-        <span className="font-medium">Dashboard</span>
-        <span className="text-white">{">"}</span>
-        <span className="text-white font-semibold">Appointment Management</span>
+      <div className="flex items-center text-sm space-x-2">
+        <span className="font-medium text-white/70">Dashboard </span>
+        <span className="text-white/70">{">"}</span>
+        <span className="text-white font-semibold">{current}</span>
       </div>
     </div>
   );

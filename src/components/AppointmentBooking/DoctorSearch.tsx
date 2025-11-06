@@ -53,7 +53,7 @@ export default function DoctorSearch({ onSelectDoctor }: { onSelectDoctor: (d: D
       {/* Filters in 2x2 grid */}
       <div className="grid grid-cols-2 gap-3">
         {/* First row */}
-        <select value={specialization} onChange={(e) => setSpecialization(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <select value={specialization} onChange={(e) => setSpecialization(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black">
           <option value="">Specialization</option>
           <option value="Cardiologist">Cardiologist</option>
           <option value="Dermatologist">Dermatologist</option>

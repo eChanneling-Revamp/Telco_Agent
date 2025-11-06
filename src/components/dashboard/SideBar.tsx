@@ -90,7 +90,7 @@ const SideBar = () => {
           <span>Directory</span>
         </NavLink>
 
-        <NavLink href="/settings">
+        <NavLink href="/Settings">
           <Settings size={20} />
           <span>Settings</span>
         </NavLink>

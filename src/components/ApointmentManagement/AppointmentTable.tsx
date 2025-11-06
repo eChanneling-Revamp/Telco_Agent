@@ -12,6 +12,7 @@ type Appointment = {
 type AppointmentTableProps = {
   appointments?: Appointment[];
   getStatusColor?: (status: string) => string;
+  inline?: boolean; // when true, skip the outer card wrapper so it can be combined with filters
 };
 
 const defaultGetStatusColor = (status: string) => {
@@ -72,10 +73,11 @@ const defaultAppointments: Appointment[] = [
 
 export default function AppointmentTable({ 
   appointments = defaultAppointments, 
-  getStatusColor = defaultGetStatusColor 
+  getStatusColor = defaultGetStatusColor,
+  inline = false,
 }: AppointmentTableProps) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+  const tableInner = (
+    <>
       <div className="overflow-x-auto">
         <table className="w-full bg-white">
           <thead>
@@ -156,6 +158,15 @@ export default function AppointmentTable({
           </button>
         </div>
       </div>
-    </div>
+    </>
+  );
+
+  if (inline) {
+    // render only inner table area so caller can wrap it in a single card with filters
+    return <div className="">{tableInner}</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden">{tableInner}</div>
   );
 }

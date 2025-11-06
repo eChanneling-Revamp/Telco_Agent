@@ -85,7 +85,8 @@ export default function AppointmentTable({
   appointmentsPerPage = 8,
   onPreviousPage,
   onNextPage,
-}: AppointmentTableProps) {
+  inline = false,
+}: AppointmentTableProps & { inline?: boolean }) {
   const totalPages = Math.ceil(totalAppointments / appointmentsPerPage);
   const startIndex = (currentPage - 1) * appointmentsPerPage + 1;
   const endIndex = Math.min(
@@ -93,9 +94,8 @@ export default function AppointmentTable({
     totalAppointments
   );
 
-  return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-
+  const tableInner = (
+    <>
       <div className="overflow-x-auto">
         <table className="w-full bg-white">
           <thead>

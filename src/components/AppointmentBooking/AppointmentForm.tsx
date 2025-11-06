@@ -79,17 +79,17 @@ Send Email Confirmation: ${form.emailConfirm ? "Yes" : "No"}
 
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-2">Confirmation Options</h4>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm text-black">
           <input type="checkbox" checked={form.sms} onChange={(e) => onChange("sms", e.target.checked)} className="w-4 h-4" />
           Send SMS Confirmation
         </label>
-        <label className="flex items-center gap-2 text-sm mt-2">
+        <label className="flex items-center gap-2 text-sm mt-2 text-black">
           <input type="checkbox" checked={form.emailConfirm} onChange={(e) => onChange("emailConfirm", e.target.checked)} className="w-4 h-4" />
           Send Email Confirmation
         </label>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-4 ">
         <button type="submit" className="px-6 py-2 rounded-full bg-gradient-to-r from-[#23DE4F] to-[#330FFB] text-white font-medium hover:opacity-95">
           Confirm Booking
         </button>

@@ -63,42 +63,64 @@ const ReportsPage: React.FC = () => {
       <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
         <h1 className="text-xl font-semibold text-gray-800 mb-4">Reports</h1>
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-700">
-            Telco Agent Module
-          </h2>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 border rounded-md px-2 py-1 text-sm text-gray-600">
-              <FaCalendarAlt className="text-gray-500" />
-              <span>mm/dd/yyyy</span>
-              <span>to</span>
-              <span>mm/dd/yyyy</span>
+        {/* Booking Analytics Section */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          {/* Header row — exactly like image */}
+          <div className="flex items-center  mb-4 w-full">
+            {/* Left: Title */}
+            <h2 className="text-sm font-semibold text-gray-700">
+              Booking Analytics
+            </h2>
+
+            {/* Center: Date Range */}
+            <div className="flex items-center gap-3 ml-40">
+            {/* From Date */}
+            <div className="flex items-center gap-2 border rounded-md px-3 py-1 text-sm text-gray-600 bg-gray-50">
+              <input
+                type="date"
+                className="outline-none bg-transparent text-gray-700 text-sm"
+              />
             </div>
-            <select className="border rounded-md px-2 py-1 text-sm text-gray-600">
+
+            <span className="text-xs text-gray-500">to</span>
+
+            {/* To Date */}
+            <div className="flex items-center gap-2 border rounded-md px-3 py-1 text-sm text-gray-600 bg-gray-50">
+              <input
+                type="date"
+                className="outline-none bg-transparent text-gray-700 text-sm"
+              />
+            </div>
+
+
+               {/* Right: Dropdown */}
+            <select className="border rounded-md px-3 py-1 text-sm text-gray-600 bg-gray-50 ml-5">
               <option>Last 7 Days</option>
               <option>Last 30 Days</option>
               <option>Last 90 Days</option>
             </select>
-          </div>
-        </div>
+            </div>
 
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm text-gray-500">Total Bookings</h3>
-            <p className="text-2xl font-semibold text-gray-800 mt-1">1,245</p>
-            <p className="text-xs text-green-600 mt-1">↑ 12% vs last period</p>
+           
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm text-gray-500">Cancellations</h3>
-            <p className="text-2xl font-semibold text-gray-800 mt-1">128</p>
-            <p className="text-xs text-red-600 mt-1">↑ 3% vs last period</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm text-gray-500">Total Revenue</h3>
-            <p className="text-2xl font-semibold text-gray-800 mt-1">Rs. 3.2M</p>
-            <p className="text-xs text-green-600 mt-1">↑ 8% vs last period</p>
+
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="bg-gray-50 rounded-lg shadow-sm p-4">
+              <h3 className="text-sm text-gray-500">Total Bookings</h3>
+              <p className="text-2xl font-semibold text-gray-800 mt-1">1,245</p>
+              <p className="text-xs text-green-600 mt-1">↑ 12% vs last period</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg shadow-sm p-4">
+              <h3 className="text-sm text-gray-500">Cancellations</h3>
+              <p className="text-2xl font-semibold text-gray-800 mt-1">128</p>
+              <p className="text-xs text-red-600 mt-1">↑ 3% vs last period</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg shadow-sm p-4">
+              <h3 className="text-sm text-gray-500">Total Revenue</h3>
+              <p className="text-2xl font-semibold text-gray-800 mt-1">Rs. 3.2M</p>
+              <p className="text-xs text-green-600 mt-1">↑ 8% vs last period</p>
+            </div>
           </div>
         </div>
 

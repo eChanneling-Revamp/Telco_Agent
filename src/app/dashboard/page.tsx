@@ -1,24 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Header from "@/components/dashboard/Header";
 import SideBar from "@/components/dashboard/SideBar";
 import StatCard from "@/components/dashboard/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import ChartCard from "@/components/dashboard/ChartCard";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  LineChart,
-  Line,
-  ResponsiveContainer,
-} from "recharts";
 import {
   ChartNoAxesColumn,
   TrendingUp,
@@ -29,6 +18,18 @@ import {
 import { dailyBookings, weeklyTrends } from "@/lib/data";
 
 const DashboardPage = () => {
+  const searchParams = useSearchParams();
+  const [selectedAccount, setSelectedAccount] = useState("Account 1");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+  
+    const email = searchParams.get("email");
+    if (email) {
+      setUserEmail(email);
+    }
+  }, [searchParams]);
+
   return (
     <div
       className="flex h-screen"
@@ -42,10 +43,17 @@ const DashboardPage = () => {
       <SideBar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <h3 className="pt-4 text-sm text-white pl-8">Dashboard</h3>
+        <Header
+          selectedAccount={selectedAccount}
+          onAccountChange={setSelectedAccount}
+          userEmail={userEmail}
+        />
+        {/* <h3 className="text-sm text-white p-2">Dashboard</h3> */}
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex items-center gap-2 mb-6  text-white">
+            <span className="text-sm ">Dashboard</span>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard
               title="Today's Bookings"

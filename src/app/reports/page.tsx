@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { FaCalendarAlt, FaFilePdf, FaFileExcel } from "react-icons/fa";
+import Header from "@/components/dashboard/Header";
 
 const dailyData = [
   { day: "Mon", bookings: 8 },
@@ -56,12 +57,24 @@ const recentActivity = [
 
 const ReportsPage: React.FC = () => {
   return (
-    <div className="flex h-screen w-full bg-[#0b233f]">
+    <div className="flex h-screen  "
+   
+      style={{
+        backgroundImage: `url('/assets/bg.png')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}>
       <Sidebar />
 
       {/* Main content */}
-      <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
-        <h1 className="text-xl font-semibold text-gray-800 mb-4">Reports</h1>
+      <div className="flex-1 flex flex-col overflow-hidden">
+       <Header />
+        <div className="flex items-center gap-2 mb-6 p-4 text-white">
+            <span className="text-sm opacity-70">Dashboard</span>
+            <span className="opacity-70">›</span>
+            <span className="text-sm">Reports & Analysits</span>
+          </div>
 
         {/* Booking Analytics Section */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">

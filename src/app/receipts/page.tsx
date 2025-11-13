@@ -72,7 +72,7 @@ const ReceiptPage = () => {
       <SideBar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <div className=" flex-1 flex flex-col overflow-hidden p-6">
+       <div className="flex-1 flex flex-col overflow-y-auto p-6">
           <div className="flex items-center gap-2 mb-6 text-white">
             <span className="text-sm opacity-70">Dashboard</span>
             <span className="opacity-70">›</span>

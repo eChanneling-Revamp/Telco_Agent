@@ -307,7 +307,7 @@ export default function Settings() {
           onAccountChange={handleAccountChange}
         />
 
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 overflow-y-auto p-2">
           <div className="min-h-screen p-4 rounded-2xl">
             <div className="flex items-center gap-2 mb-6 text-white">
               <span className="text-sm opacity-70">Dashboard</span>

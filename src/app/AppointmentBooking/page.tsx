@@ -22,8 +22,10 @@ export default function AppointmentBookingPage() {
       {/* Main */}
       <div className="flex-1 flex flex-col relative z-10">
         <Header selectedAccount="Agent" onAccountChange={() => {}} />
+          
 
         <div className="flex flex-1 px-8 py-6 gap-6 overflow-y-auto">
+          
           {/* Left Card */}
           <div className="flex-1 bg-white rounded-2xl shadow-lg p-6 border border-gray-100 min-h-[720px]">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">

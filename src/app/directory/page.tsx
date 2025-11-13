@@ -97,14 +97,16 @@ const DirectoryPage: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         
-         <div className="flex items-center gap-2 p-4 text-white">
+        
+
+        <main className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex items-center gap-2 p-2 text-white">
             <span className="text-sm opacity-70">Dashboard</span>
             <span className="opacity-70">›</span>
             <span className="text-sm">Hospitals & Pharmacy Directory</span>
           </div>
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex gap-8 h-full">
+          <div className="flex gap-4 p-2 h-full">
             {/* Left panel */}
             <div className="w-3/5 bg-[#f9fafc] rounded-xl shadow-md p-5 flex flex-col">
               {/* Search box */}

@@ -19,11 +19,10 @@ import { dailyBookings, weeklyTrends } from "@/lib/data";
 
 const DashboardPage = () => {
   const searchParams = useSearchParams();
-  const [selectedAccount, setSelectedAccount] = useState("Account 1");
-  const [userEmail, setUserEmail] = useState("");
+  // const [selectedAccount, setSelectedAccount] = useState("Account 1");
+  // const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
-  
     const email = searchParams.get("email");
     if (email) {
       setUserEmail(email);
@@ -44,9 +43,9 @@ const DashboardPage = () => {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-          selectedAccount={selectedAccount}
-          onAccountChange={setSelectedAccount}
-          userEmail={userEmail}
+        // selectedAccount={selectedAccount}
+        // onAccountChange={setSelectedAccount}
+        // userEmail={userEmail}
         />
         {/* <h3 className="text-sm text-white p-2">Dashboard</h3> */}
 

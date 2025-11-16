@@ -295,17 +295,11 @@ export default function Settings() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      {/* Sidebar */}
-      <div className="w-64 bg-[#0C4A34]/90 backdrop-blur-sm shadow-md relative z-20 border-r border-[#0f563a]/40">
-        <SideBar />
-      </div>
+      <SideBar />
 
       {/* Main area */}
       <div className="flex-1 flex flex-col relative z-10">
-        <Header
-          selectedAccount={selectedAccount}
-          onAccountChange={handleAccountChange}
-        />
+        <Header />
 
         <main className="flex-1 overflow-y-auto p-2">
           <div className="min-h-screen p-4 rounded-2xl">

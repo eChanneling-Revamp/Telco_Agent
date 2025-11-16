@@ -29,7 +29,7 @@ export default function Header({
   };
 
   return (
-    <header className="bg-white/20 px-6 py-4 flex justify-between items-center">
+    <header className="bg-black/10 px-6 py-4 flex justify-between items-center">
       <div className="flex items-center space-x-4">
         <h1 className="text-xl font-semibold text-white">Telco Agent</h1>
       </div>

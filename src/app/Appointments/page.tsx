@@ -95,10 +95,7 @@ export default function Page() {
     >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header
-          selectedAccount={selectedAccount}
-          onAccountChange={handleAccountChange}
-        />
+        <Header />
 
         <div className="flex-1 flex flex-col overflow-hidden p-6">
           <div className="flex items-center gap-2 mb-6 text-white">
@@ -108,7 +105,6 @@ export default function Page() {
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-
             <AppointmentFilters
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -116,14 +112,12 @@ export default function Page() {
               setSelectedStatus={setSelectedStatus}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
-
             />
 
             <AppointmentTable
               appointments={filteredAppointments}
               getStatusColor={getStatusColor}
             />
-
           </div>
         </div>
       </div>

@@ -271,7 +271,7 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
           <div className="flex justify-end items-center gap-3 pt-4">
             <button
               type="button"
-              className="px-6 py-3 rounded-full bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
+              className="px-6 py-3 rounded-full bg-gray-200 text-gray-900 font-medium hover:bg-gray-300 transition"
               onClick={() => setForm({
                 name: "",
                 phone: "",

@@ -38,7 +38,18 @@ function CheckoutForm({ amount }: { amount: number }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <CardElement className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      <CardElement
+        options={{
+          style: {
+            base: {
+              color: "#111827", // dark text
+              fontSize: "16px",
+              "::placeholder": { color: "#6B7280" }, // darkish placeholder
+            },
+          },
+        }}
+        className="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+      />
       <button
         type="submit"
         disabled={!stripe || loading}
@@ -83,7 +94,6 @@ function AppointmentForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // SLT Phone Validation
     if (form.sltPhone.trim() === "") {
       setMessage("SLT Phone Number is required.");
       return;
@@ -127,7 +137,7 @@ function AppointmentForm({
             value={form.name}
             onChange={(e) => onChange("name", e.target.value)}
             placeholder="Patient Name *"
-            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
           />
         </div>
 
@@ -138,7 +148,7 @@ function AppointmentForm({
             value={form.phone}
             onChange={(e) => onChange("phone", e.target.value)}
             placeholder="Phone Number *"
-            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
           />
         </div>
 
@@ -149,7 +159,7 @@ function AppointmentForm({
             value={form.email}
             onChange={(e) => onChange("email", e.target.value)}
             placeholder="Email"
-            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
           />
         </div>
 
@@ -159,19 +169,18 @@ function AppointmentForm({
           onChange={(e) => onChange("notes", e.target.value)}
           placeholder="Notes / Special Requests"
           rows={3}
-          className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+          className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
         />
       </div>
 
       {/* Payment Method + SLT Phone */}
       <div className="flex gap-2 items-center">
-        {/* Payment Method Select */}
         <div className="relative w-1/2">
           <FaCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <select
             value={form.paymentMethod}
             onChange={(e) => onChange("paymentMethod", e.target.value)}
-            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none bg-white"
+            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
           >
             <option value="bill">Add to Bill</option>
             <option value="card">Credit / Debit Card</option>
@@ -179,14 +188,13 @@ function AppointmentForm({
           </select>
         </div>
 
-        {/* SLT Phone */}
         <div className="relative w-1/2">
           <FaMobileAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={form.sltPhone}
             onChange={(e) => onChange("sltPhone", e.target.value)}
             placeholder="SLT Phone Number"
-            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-400 outline-none"
+            className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
             required
           />
         </div>
@@ -228,15 +236,12 @@ function AppointmentForm({
 
       {/* Buttons */}
       <div className="flex items-center gap-4 pt-4 justify-between">
-     <button
-      type="submit"
-      className="px-6 py-2 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold hover:opacity-90 transition shadow-md rounded-xl"
-    >
-      Confirm Booking
-    </button>
-
-
-
+        <button
+          type="submit"
+          className="px-6 py-2 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold hover:opacity-90 transition shadow-md rounded-xl"
+        >
+          Confirm Booking
+        </button>
         <button
           type="button"
           className="px-4 py-2 text-blue-500 font-semibold hover:underline transition"
@@ -265,7 +270,6 @@ function AppointmentForm({
 // Main Page
 export default function AppointmentBookingPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
-
   const cardStyle = "bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col p-8 min-h-[750px]";
 
   return (
@@ -279,20 +283,15 @@ export default function AppointmentBookingPage() {
       }}
     >
       <Sidebar />
-
       <div className="flex-1 flex flex-col relative z-10 overflow-y-auto">
         <Header />
-
         <div className="flex justify-center px-8 py-6 gap-6">
-          {/* Left Card */}
           <div className={`${cardStyle} flex-1`}>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Find Doctor / Hospital</h2>
             <div className="flex-1 overflow-y-auto">
               <DoctorSearch onSelectDoctor={setSelectedDoctor} />
             </div>
           </div>
-
-          {/* Right Card */}
           <div className={`${cardStyle} w-full lg:w-[45%]`}>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Appointment Details</h2>
             <div className="flex-1 overflow-y-auto">

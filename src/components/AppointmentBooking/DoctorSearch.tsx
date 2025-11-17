@@ -99,7 +99,8 @@ export default function DoctorSearch({ onSelectDoctor }: { onSelectDoctor: (d: D
               </div>
               <button
                 onClick={() => onSelectDoctor(doc)}
-                className="bg-gradient-to-r from-[#23DE4F] to-[#330FFB] text-white px-4 py-1.5 rounded-full text-sm font-medium hover:opacity-90"
+                className="bg-gradient-to-r from-[#23DE4F] to-[#330FFB] text-white px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 shadow-md"
+
               >
                 Select
               </button>

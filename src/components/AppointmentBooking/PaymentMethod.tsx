@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import SelectedSession from "./SelectedSession";
 
 const stripePromise = loadStripe("pk_test_YOUR_KEY_HERE");
 
-/* Stripe Payment Form */
 function CheckoutForm({ amount }: { amount: number }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -55,7 +53,6 @@ function CheckoutForm({ amount }: { amount: number }) {
   );
 }
 
-/* MAIN FORM */
 export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: any | null }) {
   const [form, setForm] = useState({
     name: "",
@@ -75,6 +72,7 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // SLT Phone is always required
     if (!form.sltPhone) {
       setMessage("SLT Phone Number is required.");
       return;
@@ -95,53 +93,17 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
         onSubmit={handleSubmit}
         className="w-full max-w-6xl flex flex-col lg:flex-row gap-8 overflow-y-auto"
       >
-        {/* LEFT PANEL - FORM */}
+        {/* Left Side - Form */}
         <div className="flex-1 space-y-8">
-
-          {/* ⭐ UPDATED SELECTED SESSION BLOCK ⭐ */}
+          {/* Selected Doctor */}
           <div className="space-y-2">
             <label className="text-sm text-gray-600 font-medium">Selected Session</label>
-
-            <div className="bg-[#F5F7FA] border border-gray-200 rounded-xl p-5">
-
-              {!selectedDoctor ? (
-                <p className="text-gray-500 text-sm">No session selected</p>
-              ) : (
-                <div className="flex flex-col gap-1">
-
-                  {/* Doctor Name */}
-                  <p className="text-[17px] font-semibold text-gray-900">
-                    {selectedDoctor.name}
-                  </p>
-
-                  {/* Specialization */}
-                  {selectedDoctor.specialization && (
-                    <p className="text-sm text-gray-700">
-                      {selectedDoctor.specialization}
-                    </p>
-                  )}
-
-                  {/* Hospital */}
-                  {selectedDoctor.hospital && (
-                    <p className="text-sm text-gray-500">
-                      {selectedDoctor.hospital}
-                    </p>
-                  )}
-
-                  {/* Green Time Chip */}
-                  <div className="mt-3 inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">
-                    {selectedDoctor.date ? `${selectedDoctor.date} | ` : ""}
-                    {selectedDoctor.available}
-                  </div>
-
-                </div>
-              )}
-              
-
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-sm text-gray-700">
+              {selectedDoctor ? `${selectedDoctor.name} — ${selectedDoctor.available}` : "No doctor selected"}
             </div>
           </div>
 
-          {/* PATIENT INFO */}
+          {/* Patient Info */}
           <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
             <div className="flex justify-between items-center">
               <h4 className="text-base font-semibold text-gray-800">Patient Information</h4>
@@ -157,7 +119,6 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
               {/* Name */}
               <div className="relative">
                 <img src="/assets/user-icon.png" className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
@@ -193,7 +154,7 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
                 />
               </div>
 
-              {/* SLT Phone */}
+              {/* SLT Phone - always required */}
               <div className="relative">
                 <img src="/assets/phone-icon.png" className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
@@ -218,10 +179,9 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
             </div>
           </div>
 
-          {/* PAYMENT METHOD */}
+          {/* Payment Method */}
           <div className="bg-gray-50 p-6 rounded-lg space-y-4">
             <h4 className="text-base font-semibold text-gray-800">Payment Method</h4>
-
             <select
               value={form.paymentMethod}
               onChange={(e) => onChange("paymentMethod", e.target.value)}
@@ -231,22 +191,22 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
               <option value="card">Credit / Debit Card</option>
               <option value="mobile">Mobile Payment</option>
             </select>
+            {/* Mobile payment does NOT add extra SLT Phone input */}
           </div>
 
-          {/* CONFIRMATION CHECKBOXES */}
+          {/* Confirmation Options */}
           <div className="flex flex-col md:flex-row gap-4">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.sms} onChange={(e) => onChange("sms", e.target.checked)} className="w-4 h-4" />
               Send SMS Confirmation
             </label>
-
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.emailConfirm} onChange={(e) => onChange("emailConfirm", e.target.checked)} className="w-4 h-4" />
               Send Email Confirmation
             </label>
           </div>
 
-          {/* MESSAGE */}
+          {/* Message Box */}
           {message && (
             <div className="flex items-center gap-2 bg-yellow-100 border border-yellow-300 rounded-md px-3 py-2 text-sm text-yellow-800">
               <img src="/assets/info-icon.png" alt="info" className="w-5 h-5" />
@@ -254,20 +214,20 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
             </div>
           )}
 
-          {/* TOTAL AMOUNT */}
+          {/* Total Amount */}
           <div className="border border-gray-200 rounded-lg bg-green-50 p-4 flex justify-between items-center">
             <span className="text-sm font-medium">Total Amount</span>
             <span className="text-green-700 font-bold">Rs. {totalAmount}</span>
           </div>
 
-          {/* STRIPE PAYMENT */}
+          {/* Stripe Payment Form */}
           {form.paymentMethod === "card" && (
             <Elements stripe={stripePromise}>
               <CheckoutForm amount={totalAmount} />
             </Elements>
           )}
 
-          {/* BUTTONS */}
+          {/* Buttons */}
           <div className="flex justify-end items-center gap-3 pt-4">
             <button
               type="button"
@@ -286,7 +246,6 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
             >
               Cancel
             </button>
-
             <button
               type="submit"
               className="px-6 py-3 rounded-full bg-gradient-to-r from-[#23DE4F] to-[#330FFB] text-white font-medium hover:opacity-95 transition"
@@ -296,7 +255,7 @@ export default function AppointmentForm({ selectedDoctor }: { selectedDoctor: an
           </div>
         </div>
 
-        {/* RIGHT PANEL IMAGE */}
+        {/* Right Side - Optional Image or Info */}
         <div className="flex-1 hidden lg:flex items-center justify-center">
           <img src="/assets/doctor-placeholder.png" alt="Doctor" className="w-full h-auto rounded-lg" />
         </div>

@@ -76,7 +76,7 @@ const SideBar = () => {
             <span className="text-sm font-medium">Appointment Booking</span>
           </NavLink>
 
-          <NavLink href="/bulk-booking">
+          <NavLink href="/BulkBooking">
             <Users size={20} />
             <span className="text-sm font-medium">Bulk Booking</span>
           </NavLink>

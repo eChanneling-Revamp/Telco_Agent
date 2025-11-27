@@ -70,7 +70,9 @@ function PersonalInfoForm() {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm text-gray-500">Mobile Phone Number</label>
+        <label className="block text-sm text-gray-500">
+          Mobile Phone Number
+        </label>
         <input
           name="phone"
           value={formData.phone}
@@ -99,7 +101,6 @@ function PersonalInfoForm() {
     </div>
   );
 }
-
 
 function SecurityForm() {
   return (
@@ -131,7 +132,7 @@ function SecurityForm() {
       </div>
 
       <div className="flex justify-end">
-        <button className="px-8 py-3 rounded-full bg-gradient-to-r from-[#23DE4F] to-[#330FFB] text-white font-medium hover:opacity-95 transition transform hover:shadow-md active:scale-95">
+        <button className="px-8 py-3 rounded-md  bg-blue-900 text-white font-medium hover:opacity-95 transition transform hover:shadow-md active:scale-95">
           Change Password
         </button>
       </div>
@@ -252,11 +253,13 @@ export default function Settings() {
 
   return (
     <div
-      className="flex h-screen bg-cover bg-center relative"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundRepeat: "no-repeat",
-      }}
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <SideBar />
 
@@ -266,10 +269,13 @@ export default function Settings() {
 
         <main className="flex-1 overflow-y-auto p-2">
           <div className="min-h-screen p-4 rounded-2xl">
-            <div className="max-w-6xl mx-auto">
-              <Breadcrumb current="Settings" />
+            <div className="flex items-center gap-2 mb-4 sm:mb-2 text-black">
+              <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
+              <span className="opacity-70">›</span>
+              <span className="text-xs sm:text-sm">Appoinment Booking</span>
             </div>
-            <div className="max-w-6xl mx-auto grid grid-cols-3 gap-6">
+
+            <div className=" grid grid-cols-3 gap-8 pt-4">
               <div className="col-span-1 space-y-6">
                 <ProfileCard />
                 <SecurityForm />

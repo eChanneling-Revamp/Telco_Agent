@@ -83,14 +83,14 @@ const DirectoryPage: React.FC = () => {
   });
 
   return (
-    <div
-      className="flex h-screen"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+     <div
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <Sidebar />
 
@@ -100,7 +100,7 @@ const DirectoryPage: React.FC = () => {
         
 
         <main className="flex-1 overflow-y-auto p-4 space-y-2">
-          <div className="flex items-center gap-2 p-2 text-white">
+          <div className="flex items-center gap-2 p-2 text-black">
             <span className="text-sm opacity-70">Dashboard</span>
             <span className="opacity-70">›</span>
             <span className="text-sm">Hospitals & Pharmacy Directory</span>
@@ -309,7 +309,7 @@ const DirectoryPage: React.FC = () => {
 
                   {/* Buttons (aligned right) */}
                   <div className="flex justify-end gap-3 mt-5">
-                    <button className="flex items-center gap-2 bg-blue-600 text-white text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-blue-700 transition-all">
+                    <button className="flex items-center gap-2  bg-blue-900 text-white text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-blue-700 transition-all">
                       <FaPhoneAlt className="text-xs" />
                       Call Now
                     </button>

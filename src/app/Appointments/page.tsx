@@ -12,63 +12,70 @@ export default function Page() {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("Account 1");
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const appointmentsPerPage = 8;
+  const [totalAppointments, setTotalAppointments] = useState(0);
 
   const handleAccountChange = (account: string) => {
     setSelectedAccount(account);
   };
 
-  const appointments = [
-    {
-      id: 1,
-      patientName: "Nimal Perera",
-      doctor: "Dr. Kumari Wickramasinghe",
-      date: "2025-05-15",
-      time: "10:00 AM",
-      status: "Confirmed",
-    },
-    {
-      id: 2,
-      patientName: "Sanduni Fernando",
-      doctor: "Dr. Ranil Jayawardena",
-      date: "2025-05-15",
-      time: "11:45 AM",
-      status: "Cancelled",
-    },
-    {
-      id: 3,
-      patientName: "Kamal Silva",
-      doctor: "Dr. Chamari Dissanayake",
-      date: "2025-05-16",
-      time: "09:30 AM",
-      status: "Confirmed",
-    },
-    {
-      id: 4,
-      patientName: "Dilani Rathnayake",
-      doctor: "Dr. Prasanna Gunasekara",
-      date: "2025-05-16",
-      time: "02:15 PM",
-      status: "Pending",
-    },
-    {
-      id: 5,
-      patientName: "Ruwan Mendis",
-      doctor: "Dr. Sachini Amarasinghe",
-      date: "2025-05-17",
-      time: "10:30 AM",
-      status: "Confirmed",
-    },
-  ] as const;
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set("page", String(currentPage));
+        params.set("limit", String(appointmentsPerPage));
+        if (searchTerm) params.set("search", searchTerm);
+        if (selectedStatus && selectedStatus !== "All Status")
+          params.set("status", selectedStatus);
+        if (selectedDate) params.set("date", selectedDate);
 
-  const filteredAppointments = appointments.filter((apt) => {
-    const matchesSearch =
-      apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      apt.doctor.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      selectedStatus === "All Status" || apt.status === selectedStatus;
-    const matchesDate = !selectedDate || apt.date === selectedDate;
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+        const res = await fetch(
+          `/api/appointments/my-appointments?${params.toString()}`
+        );
+        if (!res.ok) throw new Error("Not authenticated or failed");
+        const data = await res.json();
+
+        const mapped = (data.appointments || []).map((a: any) => ({
+          id: a.id,
+          patientName: a.patient_name,
+          doctor: a.doctor_name,
+          date: a.appointment_date,
+          time: a.timeSlot || (a.appointment_time ? a.appointment_time : ""),
+          status: a.status || "Confirmed",
+        }));
+
+        setAppointments(mapped);
+        setTotalAppointments(data.total || 0);
+      } catch (err) {
+        console.error("Failed to fetch appointments", err);
+        setAppointments([]);
+        setTotalAppointments(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [currentPage, searchTerm, selectedStatus, selectedDate]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStatus, selectedDate]);
+
+  // server returns paged results, use them directly
+  const pagedAppointments = appointments;
+
+  const handlePreviousPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () =>
+    setCurrentPage((p) =>
+      Math.min(Math.ceil(totalAppointments / appointmentsPerPage) || 1, p + 1)
+    );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -85,13 +92,13 @@ export default function Page() {
 
   return (
     <div
-      className="flex flex-col lg:flex-row h-screen overflow-hidden"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0">
@@ -99,7 +106,7 @@ export default function Page() {
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6 text-white">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6 text-black">
               <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
               <span className="opacity-70">›</span>
               <span className="text-xs sm:text-sm">Appointment Management</span>
@@ -116,8 +123,13 @@ export default function Page() {
               />
 
               <AppointmentTable
-                appointments={filteredAppointments}
+                appointments={pagedAppointments}
                 getStatusColor={getStatusColor}
+                currentPage={currentPage}
+                totalAppointments={totalAppointments}
+                appointmentsPerPage={appointmentsPerPage}
+                onPreviousPage={handlePreviousPage}
+                onNextPage={handleNextPage}
               />
             </div>
           </div>

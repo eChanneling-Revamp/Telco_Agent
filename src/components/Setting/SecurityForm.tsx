@@ -30,7 +30,7 @@ const SecurityForm = () => {
         />
       </div>
 
-      <button className="bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg px-4 py-2 text-sm">
+      <button className=" bg-blue-900 text-white rounded-lg px-4 py-2 text-sm">
         Change Password
       </button>
     </div>

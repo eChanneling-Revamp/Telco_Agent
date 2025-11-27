@@ -47,7 +47,7 @@ export default function BulkBookingContainer() {
   };
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+    <div className="space-y-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 text-black">
       <AvailableDoctors />
 
       <div className="flex border-b border-gray-200">
@@ -74,7 +74,11 @@ export default function BulkBookingContainer() {
           onClick={() => setActiveTab("csv")}
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+              clipRule="evenodd"
+            />
           </svg>
           CSV Import
           {activeTab === "csv" && (
@@ -91,20 +95,33 @@ export default function BulkBookingContainer() {
 
       {entries.length > 0 && activeTab === "csv" && (
         <div>
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Imported Appointments</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Imported Appointments
+          </h3>
           <EntryList entries={entries} setEntries={setEntries} />
-          
+
           <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-green-200 mt-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-6 h-6 text-green-600"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div>
-                <p className="font-bold text-gray-800 text-base">Ready to Submit</p>
+                <p className="font-bold text-gray-800 text-base">
+                  Ready to Submit
+                </p>
                 <p className="text-xs text-gray-600">
-                  {entries.length} appointment{entries.length > 1 ? "s" : ""} ready for booking
+                  {entries.length} appointment{entries.length > 1 ? "s" : ""}{" "}
+                  ready for booking
                 </p>
               </div>
             </div>

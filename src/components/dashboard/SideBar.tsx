@@ -32,11 +32,7 @@ const SideBar = () => {
       <Link
         href={href}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 
-          ${
-            isActive
-              ? "bg-gradient-to-r from-[#12E62B]/80 to-[#3B16F4]/80 text-white"
-              : "text-white/90 hover:bg-white/10"
-          }`}
+          ${isActive ? "bg-blue-950 text-" : "text-black/90 hover:bg-blue-50"}`}
       >
         {children}
       </Link>
@@ -45,14 +41,14 @@ const SideBar = () => {
 
   return (
     <div
-      className="w-1/6 h-screen text-white flex flex-col relative"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="w-1/6 h-screen text-white flex flex-col relative bg-white/90"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
-      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+      <div className="absolute inset-0  pointer-events-none" />
 
       <div className="relative z-10 flex flex-col h-full">
         <div className="px-6 pt-6 pb-4">
@@ -107,13 +103,13 @@ const SideBar = () => {
           </NavLink>
         </nav>
 
-        <div className="px-4 pb-4 space-y-1 border-t border-white/30 pt-4">
-          <button className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 text-white/90 hover:bg-white/10 w-full text-left">
+        <div className="px-4 pb-4 space-y-1 border-t border-black/30 pt-4 text-black">
+          <button className="flex items-center gap-3 px-4 py-3 text-black rounded-lg transition-colors duration-200 hover:bg-blue-50 w-full text-left">
             <LogOut size={20} />
-            <span className="text-sm font-medium">Logout</span>
+            <span className="text-sm font-medium ">Logout</span>
           </button>
 
-          <button className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 text-white/90 hover:bg-white/10 w-full text-left">
+          <button className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 text-black hover:bg-blue-50 w-full text-left">
             <HelpCircle size={20} />
             <span className="text-sm font-medium">Help</span>
           </button>

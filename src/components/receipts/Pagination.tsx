@@ -40,7 +40,7 @@ const Pagination = ({
           className={`px-6 py-2 text-sm rounded-lg ${
             isLastPage
               ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-linear-65 from-green-500 to-blue-800 text-white hover:bg-teal-700"
+              : " bg-blue-900 text-white hover:bg-blue-800"
           }`}
           onClick={onNextPage}
           disabled={isLastPage}

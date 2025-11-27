@@ -60,20 +60,20 @@ const ReceiptPage = () => {
   };
 
   return (
-    <div
-      className="flex h-screen"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+   <div
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <SideBar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <div className=" flex-1 flex flex-col overflow-hidden p-6">
-          <div className="flex items-center gap-2 mb-6 text-white">
+          <div className="flex items-center gap-2 mb-6 text-black">
             <span className="text-sm opacity-70">Dashboard</span>
             <span className="opacity-70">›</span>
             <span className="text-sm">Receipt Management</span>

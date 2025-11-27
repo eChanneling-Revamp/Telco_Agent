@@ -188,7 +188,7 @@ export default function AppointmentTable({
           <button
             onClick={onNextPage}
             disabled={currentPage >= totalPages}
-            className="px-4 py-2 text-sm border border-gray-300 bg-linear-65 from-green-500 to-blue-800 text-white hover:bg-teal-700  rounded-lg"
+            className="px-4 py-2 text-sm border border-gray-300  bg-blue-900 text-white hover:bg-blue-800 rounded-lg"
           >
             Next
           </button>

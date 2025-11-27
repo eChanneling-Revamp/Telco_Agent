@@ -3,10 +3,22 @@
 import Sidebar from "../../components/dashboard/SideBar";
 import Header from "../../components/dashboard/Header";
 import DoctorSearch from "../../components/AppointmentBooking/DoctorSearch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { FaUser, FaPhoneAlt, FaMobileAlt, FaEnvelope, FaCreditCard } from "react-icons/fa";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import {
+  FaUser,
+  FaPhoneAlt,
+  FaMobileAlt,
+  FaEnvelope,
+  FaCreditCard,
+} from "react-icons/fa";
+import { useRouter } from "next/navigation";
 
 const stripePromise = loadStripe("pk_test_YOUR_KEY_HERE");
 
@@ -31,7 +43,8 @@ function CheckoutForm({ amount }: { amount: number }) {
     });
 
     if (error) setMessage(error.message || "Payment failed");
-    else setMessage("Payment successful! PaymentMethod ID: " + paymentMethod.id);
+    else
+      setMessage("Payment successful! PaymentMethod ID: " + paymentMethod.id);
 
     setLoading(false);
   };
@@ -53,7 +66,7 @@ function CheckoutForm({ amount }: { amount: number }) {
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-2 rounded-lg hover:opacity-90 transition"
+        className="w-full bg-blue-900 text-white font-medium py-2 rounded-lg hover:opacity-90 transition"
       >
         {loading ? "Processing..." : `Pay Rs. ${amount}`}
       </button>
@@ -72,7 +85,7 @@ function AppointmentForm({
   onSubmit,
 }: {
   selectedDoctor: any | null;
-  onSubmit?: (data: any) => void;
+  onSubmit?: (data: any, onSuccess?: () => void) => void;
 }) {
   const [form, setForm] = useState({
     name: "",
@@ -89,7 +102,13 @@ function AppointmentForm({
   const [message, setMessage] = useState("");
   const onChange = (k: string, v: any) => setForm((s) => ({ ...s, [k]: v }));
 
-  const totalAmount = 3000;
+  const [totalAmount, setTotalAmount] = useState<number | null>(
+    selectedDoctor?.consultationFee ?? null
+  );
+
+  useEffect(() => {
+    setTotalAmount(selectedDoctor?.consultationFee ?? null);
+  }, [selectedDoctor]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,33 +120,61 @@ function AppointmentForm({
 
     if (form.paymentMethod === "card") {
       setMessage("Please complete payment below before confirming booking.");
-    } else {
-      setMessage("Booking Completed!");
-      if (onSubmit) onSubmit(form);
+      return;
     }
+
+    // Build payload and pass to onSubmit for API call
+    const payload = {
+      doctorId: selectedDoctor?.id,
+      availabilityId: selectedDoctor?.availabilityId,
+      patientName: form.name,
+      patientPhone: form.phone,
+      patientEmail: form.email,
+      sltPhone: form.sltPhone,
+      notes: form.notes,
+      appointmentDate: new Date().toISOString().split("T")[0],
+      appointmentTime: selectedDoctor?.available?.split("–")[0]?.trim() || "",
+      paymentMethod: form.paymentMethod,
+      totalAmount: selectedDoctor?.consultationFee || 3000,
+      isMember: form.member,
+      sendSms: form.sms,
+      sendEmail: form.emailConfirm,
+    };
+
+    if (onSubmit)
+      onSubmit(payload, () => {
+        setForm({
+          name: "",
+          phone: "",
+          email: "",
+          notes: "",
+          sms: true,
+          emailConfirm: false,
+          member: false,
+          paymentMethod: "bill",
+          sltPhone: "",
+        });
+        setMessage("✅ Booking Completed!");
+      });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full space-y-4 overflow-y-auto">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col h-full space-y-4 overflow-y-auto text-black"
+    >
       {/* Selected Session */}
       <div className="text-gray-700 font-semibold">Selected Session</div>
       <div className="bg-gray-50 border border-gray-300 rounded-md p-3 text-sm text-gray-700 mb-2">
-        {selectedDoctor ? `${selectedDoctor.name} — ${selectedDoctor.available}` : "No doctor selected"}
+        {selectedDoctor
+          ? `${selectedDoctor.name} — ${selectedDoctor.available}`
+          : "No doctor selected"}
       </div>
 
       {/* Patient Info */}
       <div className="flex flex-col space-y-3">
         <div className="flex justify-between items-center text-sm font-medium">
           <span>Patient Information</span>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500">Member</span>
-            <input
-              type="checkbox"
-              checked={form.member}
-              onChange={(e) => onChange("member", e.target.checked)}
-              className="w-4 h-4"
-            />
-          </div>
         </div>
 
         {/* Name */}
@@ -183,7 +230,7 @@ function AppointmentForm({
             className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-500 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
           >
             <option value="bill">Add to Bill</option>
-            <option value="card">Credit / Debit Card</option>
+            {/* <option value="card">Credit / Debit Card</option> */}
             <option value="mobile">Mobile Payment</option>
           </select>
         </div>
@@ -200,14 +247,16 @@ function AppointmentForm({
         </div>
       </div>
 
-      {/* Total Amount */}
-      <div className="flex justify-between items-center bg-green-50 border border-green-200 rounded-md px-4 py-2 text-sm font-medium text-gray-800">
-        <span>Total Amount</span>
-        <span className="text-green-700 font-bold">Rs. {totalAmount}</span>
-      </div>
+      {/* Total Amount (only show when a doctor is selected) */}
+      {totalAmount != null && (
+        <div className="flex justify-between items-center bg-green-50 border border-green-200 rounded-md px-4 py-2 text-sm font-medium text-gray-800">
+          <span>Total Amount</span>
+          <span className="text-green-700 font-bold">Rs. {totalAmount}</span>
+        </div>
+      )}
 
       {/* Stripe Payment */}
-      {form.paymentMethod === "card" && (
+      {form.paymentMethod === "card" && totalAmount != null && (
         <div className="mt-2 flex-1 overflow-y-auto">
           <Elements stripe={stripePromise}>
             <CheckoutForm amount={totalAmount} />
@@ -218,11 +267,21 @@ function AppointmentForm({
       {/* Confirmation Options */}
       <div className="flex flex-col space-y-1 text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={form.sms} onChange={(e) => onChange("sms", e.target.checked)} className="w-4 h-4" />
+          <input
+            type="checkbox"
+            checked={form.sms}
+            onChange={(e) => onChange("sms", e.target.checked)}
+            className="w-4 h-4"
+          />
           Send SMS Confirmation
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={form.emailConfirm} onChange={(e) => onChange("emailConfirm", e.target.checked)} className="w-4 h-4" />
+          <input
+            type="checkbox"
+            checked={form.emailConfirm}
+            onChange={(e) => onChange("emailConfirm", e.target.checked)}
+            className="w-4 h-4"
+          />
           Send Email Confirmation
         </label>
       </div>
@@ -238,7 +297,7 @@ function AppointmentForm({
       <div className="flex items-center gap-4 pt-4 justify-between">
         <button
           type="submit"
-          className="px-6 py-2 bg-gradient-to-r from-green-400 to-blue-500 text-white font-semibold hover:opacity-90 transition shadow-md rounded-xl"
+          className="px-6 py-2  bg-blue-900 text-white font-semibold hover:opacity-90 transition shadow-md rounded-xl"
         >
           Confirm Booking
         </button>
@@ -270,32 +329,75 @@ function AppointmentForm({
 // Main Page
 export default function AppointmentBookingPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<any | null>(null);
-  const cardStyle = "bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col p-8 min-h-[750px]";
+  const router = useRouter();
+
+  // called when the form wants to create an appointment
+  const handleCreateAppointment = async (
+    payload: any,
+    onSuccess?: () => void
+  ) => {
+    try {
+      const res = await fetch("/api/appointments/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        // navigate to appointment management page to view created appointment
+        router.push("/Appointments");
+        if (onSuccess) onSuccess();
+      } else {
+        alert(data.error || "Booking failed");
+      }
+    } catch (err) {
+      console.error("Booking error", err);
+      alert("Network error while booking");
+    }
+  };
+  const cardStyle =
+    "bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col p-8 min-h-[750px]";
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <Sidebar />
       <div className="flex-1 flex flex-col relative z-10 overflow-y-auto">
         <Header />
-        <div className="flex justify-center px-8 py-6 gap-6">
-          <div className={`${cardStyle} flex-1`}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Find Doctor / Hospital</h2>
-            <div className="flex-1 overflow-y-auto">
-              <DoctorSearch onSelectDoctor={setSelectedDoctor} />
-            </div>
+        <div className="p-3 sm:p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-4 sm:mb-2 text-black">
+            <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
+            <span className="opacity-70">›</span>
+            <span className="text-xs sm:text-sm">Appoinment Booking</span>
           </div>
-          <div className={`${cardStyle} w-full lg:w-[45%]`}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Appointment Details</h2>
-            <div className="flex-1 overflow-y-auto">
-              <AppointmentForm selectedDoctor={selectedDoctor} />
+
+          <div className="flex justify-center px-2 py-2 gap-6">
+            <div className={`${cardStyle} flex-1`}>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                Find Doctor / Hospital
+              </h2>
+              <div className="flex-1 overflow-y-auto">
+                <DoctorSearch onSelectDoctor={setSelectedDoctor} />
+              </div>
+            </div>
+            <div className={`${cardStyle} w-full lg:w-[45%]`}>
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                Appointment Details
+              </h2>
+              <div className="flex-1 overflow-y-auto">
+                <AppointmentForm
+                  selectedDoctor={selectedDoctor}
+                  onSubmit={handleCreateAppointment}
+                />
+              </div>
             </div>
           </div>
         </div>

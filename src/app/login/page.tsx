@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
@@ -9,6 +9,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,10 +18,11 @@ const LoginPage = () => {
     return emailRegex.test(email);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setErrors({ email: "", password: "" });
     let hasError = false;
     const newErrors = { email: "", password: "" };
+
     if (!email.trim()) {
       newErrors.email = "Email is required";
       hasError = true;
@@ -28,6 +30,7 @@ const LoginPage = () => {
       newErrors.email = "Please enter a valid email address";
       hasError = true;
     }
+
     if (!password.trim()) {
       newErrors.password = "Password is required";
       hasError = true;
@@ -35,32 +38,59 @@ const LoginPage = () => {
       newErrors.password = "Password must be at least 6 characters";
       hasError = true;
     }
+
     if (hasError) {
       setErrors(newErrors);
       return;
     }
+
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      localStorage.setItem("userEmail", email);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({
+          email: '',
+          password: data.error || 'Login failed'
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Store user info (optional, since it's in cookie)
+      if (rememberMe) {
+        localStorage.setItem("userEmail", email);
+      }
+
       router.push("/dashboard");
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrors({
+        email: '',
+        password: 'An error occurred. Please try again.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSubmit();
     }
   };
+
   return (
-    <div
-      className="flex h-screen"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+    <div className="flex h-screen bg-[#eaeaea]">
       <div className="flex-1 flex flex-col justify-center items-center">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
@@ -109,7 +139,7 @@ const LoginPage = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -117,7 +147,7 @@ const LoginPage = () => {
                   }}
                   onKeyPress={handleKeyPress}
                   placeholder="Enter your password"
-                  className={`w-full pl-10 pr-4 py-3 border ${
+                  className={`w-full pl-10 pr-12 py-3 border ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   } text-black rounded-lg focus:outline-none focus:ring-2 ${
                     errors.password
@@ -125,6 +155,18 @@ const LoginPage = () => {
                       : "focus:ring-blue-500"
                   } focus:border-transparent transition`}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-1 text-xs text-red-500">{errors.password}</p>
@@ -153,7 +195,7 @@ const LoginPage = () => {
             <button
               onClick={handleSubmit}
               disabled={isLoading}
-              className={`w-full py-3 bg-gradient-to-r from-green-700 to-blue-700 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
+              className={`w-full py-3 bg-blue-900 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 ${
                 isLoading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -187,6 +229,9 @@ const LoginPage = () => {
             </button>
             <div className="mt-8 text-center text-xs text-gray-500">
               © 2025 Sri Lanka Telecom - eChannelling
+            </div>
+            <div className="mt-8 text-center text-xs text-gray-500">
+              Use: test@example.com / password123 to login
             </div>
           </div>
         </div>

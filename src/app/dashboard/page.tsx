@@ -31,13 +31,13 @@ const DashboardPage = () => {
 
   return (
     <div
-      className="flex h-screen"
-      style={{
-        backgroundImage: `url('/assets/bg.png')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="flex h-screen bg-[#eaeaea]"
+      // style={{
+      //   backgroundImage: `url('/assets/bg.png')`,
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundRepeat: "no-repeat",
+      // }}
     >
       <SideBar />
 
@@ -50,7 +50,7 @@ const DashboardPage = () => {
         {/* <h3 className="text-sm text-white p-2">Dashboard</h3> */}
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex items-center gap-2 mb-6  text-white">
+          <div className="flex items-center gap-2 mb-6  text-black">
             <span className="text-sm ">Dashboard</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

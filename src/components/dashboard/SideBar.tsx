@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Calendar,
@@ -38,6 +38,21 @@ const SideBar = () => {
       </Link>
     );
   };
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      localStorage.removeItem("userEmail");
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout error:", error);
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <div
@@ -62,10 +77,10 @@ const SideBar = () => {
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
-          <NavLink href="/dashboard">
+          {/* <NavLink href="/dashboard">
             <Home size={20} />
             <span className="text-sm font-medium">Dashboard</span>
-          </NavLink>
+          </NavLink> */}
 
           <NavLink href="/AppointmentBooking">
             <Calendar size={20} />
@@ -82,29 +97,32 @@ const SideBar = () => {
             <span className="text-sm font-medium">Appointment Management</span>
           </NavLink>
 
-          <NavLink href="/reports">
+          {/* <NavLink href="/reports">
             <ChartNoAxesColumnIncreasing size={20} />
             <span className="text-sm font-medium">Reports</span>
-          </NavLink>
+          </NavLink> */}
 
-          <NavLink href="/receipts">
+          {/* <NavLink href="/receipts">
             <Receipt size={20} />
             <span className="text-sm font-medium">Receipts</span>
-          </NavLink>
+          </NavLink> */}
 
           <NavLink href="/directory">
             <Building size={20} />
             <span className="text-sm font-medium">Directory</span>
           </NavLink>
 
-          <NavLink href="/Settings">
+          {/* <NavLink href="/Settings">
             <Settings size={20} />
             <span className="text-sm font-medium">Settings</span>
-          </NavLink>
+          </NavLink> */}
         </nav>
 
         <div className="px-4 pb-4 space-y-1 border-t border-black/30 pt-4 text-black">
-          <button className="flex items-center gap-3 px-4 py-3 text-black rounded-lg transition-colors duration-200 hover:bg-blue-50 w-full text-left">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-black rounded-lg transition-colors duration-200 hover:bg-blue-50 w-full text-left"
+          >
             <LogOut size={20} />
             <span className="text-sm font-medium ">Logout</span>
           </button>

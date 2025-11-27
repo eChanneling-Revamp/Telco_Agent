@@ -71,7 +71,7 @@ const LoginPage = () => {
         localStorage.setItem("userEmail", email);
       }
 
-      router.push("/dashboard");
+      router.push("/AppointmentBooking");
     } catch (error) {
       console.error('Login error:', error);
       setErrors({

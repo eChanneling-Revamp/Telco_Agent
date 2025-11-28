@@ -5,7 +5,10 @@ import Sidebar from "../../components/dashboard/SideBar";
 import Header from "../../components/dashboard/Header";
 import AppointmentFilters from "../../components/ApointmentManagement/appointmentFilters";
 import AppointmentTable from "../../components/ApointmentManagement/AppointmentTable";
+import MyAppointments from "../../components/ApointmentManagement/MyAppointments";
+import AppointmentDetailsModal from "../../components/ApointmentManagement/AppointmentDetailsModal";
 import Breadcrumb from "@/components/ApointmentManagement/Breadcrumb";
+import { Grid3X3, List } from "lucide-react";
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,11 +18,38 @@ export default function Page() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<"table" | "card">("card");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const appointmentsPerPage = 8;
   const [totalAppointments, setTotalAppointments] = useState(0);
 
   const handleAccountChange = (account: string) => {
     setSelectedAccount(account);
+  };
+
+  const handleViewDetails = (appointmentId: number) => {
+    const appointment = appointments.find((apt) => apt.id === appointmentId);
+    if (appointment) {
+      setSelectedAppointment({
+        id: appointment.id,
+        appointmentId: appointment.appointmentId || `APT${String(appointment.id).padStart(4, "0")}`,
+        status: appointment.status || "Confirmed",
+        doctor: appointment.doctor,
+        specialization: appointment.specialization,
+        hospital: appointment.hospital,
+        date: appointment.date,
+        time: appointment.time,
+        amount: appointment.amount || 2750,
+        patientName: appointment.patientName,
+        patientPhone: appointment.patientPhone,
+        basePrice: appointment.basePrice || 2800,
+        refundDeposit: appointment.refundDeposit || 200,
+        total: appointment.total || 2750,
+        refundEligible: appointment.refundEligible || "Rs. 250 deposit paid – Full refund eligible if cancelled",
+      });
+      setIsModalOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -102,7 +132,7 @@ export default function Page() {
     >
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0">
-        <Header />
+        <Header selectedAccount={selectedAccount} onAccountChange={handleAccountChange} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">
@@ -113,6 +143,10 @@ export default function Page() {
             </div>
 
             <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
+              {/* Title */}
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">My Placed Appointments</h1>
+
+              {/* Filter Section */}
               <AppointmentFilters
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
@@ -120,21 +154,68 @@ export default function Page() {
                 setSelectedStatus={setSelectedStatus}
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate}
+                compact={true}
               />
 
-              <AppointmentTable
-                appointments={pagedAppointments}
-                getStatusColor={getStatusColor}
-                currentPage={currentPage}
-                totalAppointments={totalAppointments}
-                appointmentsPerPage={appointmentsPerPage}
-                onPreviousPage={handlePreviousPage}
-                onNextPage={handleNextPage}
-              />
+              {/* View Toggle */}
+              <div className="flex items-center justify-end gap-2 mb-6 mt-4">
+                <span className="text-sm text-gray-600">View Mode:</span>
+                <button
+                  onClick={() => setViewMode("card")}
+                  className={`p-2 rounded-lg transition ${
+                    viewMode === "card"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  title="Card View"
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`p-2 rounded-lg transition ${
+                    viewMode === "table"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  title="Table View"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Card View */}
+              {viewMode === "card" ? (
+                <MyAppointments
+                  appointments={pagedAppointments}
+                  loading={loading}
+                  searchTerm={searchTerm}
+                  selectedStatus={selectedStatus !== "All Status" ? selectedStatus : "All"}
+                  onView={handleViewDetails}
+                />
+              ) : (
+                /* Table View */
+                <AppointmentTable
+                  appointments={pagedAppointments}
+                  getStatusColor={getStatusColor}
+                  currentPage={currentPage}
+                  totalAppointments={totalAppointments}
+                  appointmentsPerPage={appointmentsPerPage}
+                  onPreviousPage={handlePreviousPage}
+                  onNextPage={handleNextPage}
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 }

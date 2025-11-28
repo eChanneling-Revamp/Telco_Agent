@@ -36,39 +36,67 @@ export async function POST(request: NextRequest) {
       isMember,
       sendSms,
       sendEmail,
+      agreeRefund,
     } = body;
 
-    // Validation
+    // Validation - check required fields
     if (
       !doctorId ||
       !patientName ||
-      !patientPhone ||
-      !sltPhone ||
       !appointmentDate ||
-      !appointmentTime
+      !appointmentTime ||
+      !totalAmount
     ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Missing required fields: doctorId, patientName, appointmentDate, appointmentTime, totalAmount",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Use sltPhone if provided, otherwise use patientPhone, otherwise use null
+    const finalSltPhone = sltPhone || patientPhone || null;
+
+    if (!finalSltPhone) {
+      return NextResponse.json(
+        { error: "Either sltPhone or patientPhone is required" },
         { status: 400 }
       );
     }
 
     await client.query("BEGIN");
 
-    // Check if slot is available
-    const availabilityCheck = await client.query(
-      `SELECT * FROM doctor_availability 
-       WHERE id = $1 AND is_active = true 
-       AND booked_appointments < max_appointments`,
-      [availabilityId]
+    // Fetch doctor details
+    const doctorResult = await client.query(
+      `SELECT id, name, specialty, hospital FROM doctors WHERE id = $1`,
+      [doctorId]
     );
 
-    if (availabilityCheck.rows.length === 0) {
+    if (doctorResult.rows.length === 0) {
       await client.query("ROLLBACK");
-      return NextResponse.json(
-        { error: "This time slot is no longer available" },
-        { status: 400 }
+      return NextResponse.json({ error: "Doctor not found" }, { status: 400 });
+    }
+
+    const doctor = doctorResult.rows[0];
+
+    // Check if slot is available (optional check if availabilityId is provided)
+    if (availabilityId) {
+      const availabilityCheck = await client.query(
+        `SELECT * FROM doctor_availability 
+         WHERE id = $1 AND is_active = true 
+         AND booked_appointments < max_appointments`,
+        [availabilityId]
       );
+
+      if (availabilityCheck.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return NextResponse.json(
+          { error: "This time slot is no longer available" },
+          { status: 400 }
+        );
+      }
     }
 
     // Normalize appointmentTime: extract start time if a range was passed
@@ -109,38 +137,45 @@ export async function POST(request: NextRequest) {
       `INSERT INTO appointments (
         user_id, doctor_id, availability_id, patient_name, patient_phone,
         patient_email, slt_phone, notes, appointment_date, appointment_time,
-        payment_method, total_amount, is_member, send_sms, send_email, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        payment_method, total_amount, is_member, send_sms, send_email, status,
+        doctor_name, specialty, hospital, refund_eligible
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
       RETURNING *`,
       [
         userId,
         doctorId,
-        availabilityId,
+        availabilityId || null,
         patientName,
-        patientPhone,
+        patientPhone || finalSltPhone,
         patientEmail || null,
-        sltPhone,
+        finalSltPhone,
         notes || null,
         appointmentDate,
         appointmentTimeValue,
-        paymentMethod,
+        paymentMethod || "bill",
         totalAmount,
-        isMember,
-        sendSms,
-        sendEmail,
+        isMember || false,
+        sendSms !== undefined ? sendSms : true,
+        sendEmail !== undefined ? sendEmail : false,
         "confirmed",
+        doctor.name,
+        doctor.specialty,
+        doctor.hospital,
+        agreeRefund || false,
       ]
     );
 
     const appointment = appointmentResult.rows[0];
 
-    // Update availability count
-    await client.query(
-      `UPDATE doctor_availability 
-       SET booked_appointments = booked_appointments + 1 
-       WHERE id = $1`,
-      [availabilityId]
-    );
+    // Update availability count (if availabilityId was provided)
+    if (availabilityId) {
+      await client.query(
+        `UPDATE doctor_availability 
+         SET booked_appointments = booked_appointments + 1 
+         WHERE id = $1`,
+        [availabilityId]
+      );
+    }
 
     // Create payment record
     const paymentStatus = paymentMethod === "card" ? "pending" : "paid";

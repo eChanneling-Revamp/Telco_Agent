@@ -1,5 +1,6 @@
 "use client";
-import { Search, Calendar, ChevronDown, Filter } from "lucide-react"; // <-- Use Filter icon here
+import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 
 type AppointmentFiltersProps = {
   searchTerm: string;
@@ -20,62 +21,61 @@ export default function AppointmentFilters({
   setSelectedDate,
   compact = false,
 }: AppointmentFiltersProps) {
-  const containerClass = compact ? "p-4" : "p-4 bg-white border-b shadow-sm";
+  const containerClass = compact ? "p-4" : "py-6 px-4 bg-transparent";
+  const [inputValue, setInputValue] = useState<string>(searchTerm ?? "");
+
+  // Keep local input in sync if parent resets searchTerm
+  useEffect(() => {
+    setInputValue(searchTerm ?? "");
+  }, [searchTerm]);
+
+  // Debounce input -> propagate to parent after delay
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (inputValue !== searchTerm) setSearchTerm(inputValue);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [inputValue, searchTerm, setSearchTerm]);
 
   return (
     <div className={containerClass}>
-      <div className="flex flex-wrap items-center gap-3">
-        {/*  Search */}
-        <div className="flex-1 relative min-w-[220px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by patient or doctor"
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="flex justify-center">
+        <div className="w-full flex justify-center">
+          <div className="w-full max-w-[1200px]">
+            {/* Outer pill: make it white and visually heavier (larger padding, bolder input) */}
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 px-8 py-3">
+            <div className="flex items-center gap-4">
+              {/* search icon */}
+              <div className="flex items-center pl-2">
+                <Search className="w-6 h-6 text-gray-500" />
+              </div>
 
-        {/*  Date Picker */}
-        <div className="relative flex items-center w-44">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="mm/dd/yyyy"
-            className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            onFocus={(e) => (e.target.type = "date")}
-            onBlur={(e) => !e.target.value && (e.target.type = "text")}
-          />
-        </div>
+              {/* input */}
+                  <input
+                    type="text"
+                    placeholder="Search by patient name, doctor, or mobile number"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-lg font-medium text-gray-700 placeholder-gray-400 px-4 py-2"
+                  />
 
-        {/*  Status Dropdown */}
-        <div className="relative w-40">
-          <select
-            className="appearance-none w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 pr-8 transition-all"
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-          >
-            <option>All Status</option>
-            <option>Confirmed</option>
-            <option>Pending</option>
-            <option>Cancelled</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+              {/* blue rounded search button (larger square pill) */}
+                  <button
+                    onClick={() => {
+                      // apply immediately when user clicks the button
+                      if (inputValue !== searchTerm) setSearchTerm(inputValue);
+                    }}
+                    className="ml-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl w-12 h-12 shadow-lg flex items-center justify-center"
+                    aria-label="Search"
+                  >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                </svg>
+              </button>
+            </div>
+            </div>
+          </div>
         </div>
-
-        {/*  More Filters Button */}
-        <button
-          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:border-teal-500 hover:text-teal-600 shadow-sm transition-all"
-          onClick={() =>
-            alert("Open advanced filters (Doctor, Department, Time, etc.)")
-          }
-        >
-          <Filter className="w-4 h-4 text-gray-600" /> {/* Funnel icon */}
-          More Filters
-        </button>
       </div>
     </div>
   );

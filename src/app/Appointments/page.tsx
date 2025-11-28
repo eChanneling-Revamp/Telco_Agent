@@ -3,9 +3,12 @@
 import { useState, useEffect, useMemo } from "react";
 import Sidebar from "../../components/dashboard/SideBar";
 import Header from "../../components/dashboard/Header";
-import AppointmentFilters from "../../components/ApointmentManagement/appointmentFilters";
 import AppointmentTable from "../../components/ApointmentManagement/AppointmentTable";
+import AppointmentFilters from "../../components/ApointmentManagement/appointmentFilters";
+import MyAppointments from "../../components/ApointmentManagement/MyAppointments";
+import AppointmentDetailsModal from "../../components/ApointmentManagement/AppointmentDetailsModal";
 import Breadcrumb from "@/components/ApointmentManagement/Breadcrumb";
+// page-level icons not required
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,11 +18,38 @@ export default function Page() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  // page uses card view only
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const appointmentsPerPage = 8;
   const [totalAppointments, setTotalAppointments] = useState(0);
 
   const handleAccountChange = (account: string) => {
     setSelectedAccount(account);
+  };
+
+  const handleViewDetails = (appointmentId: number) => {
+    const appointment = appointments.find((apt) => apt.id === appointmentId);
+    if (appointment) {
+      setSelectedAppointment({
+        id: appointment.id,
+        appointmentId: appointment.appointmentId || `APT${String(appointment.id).padStart(4, "0")}`,
+        status: appointment.status || "Confirmed",
+        doctor: appointment.doctor,
+        specialization: appointment.specialization,
+        hospital: appointment.hospital,
+        date: appointment.date,
+        time: appointment.time,
+        amount: appointment.amount || 2750,
+        patientName: appointment.patientName,
+        patientPhone: appointment.patientPhone,
+        basePrice: appointment.basePrice || 2800,
+        refundDeposit: appointment.refundDeposit || 200,
+        total: appointment.total || 2750,
+        refundEligible: appointment.refundEligible || "Rs. 250 deposit paid – Full refund eligible if cancelled",
+      });
+      setIsModalOpen(true);
+    }
   };
 
   useEffect(() => {
@@ -91,50 +121,60 @@ export default function Page() {
   };
 
   return (
-    <div
-      className="flex h-screen bg-[#eaeaea]"
-      // style={{
-      //   backgroundImage: `url('/assets/bg.png')`,
-      //   backgroundSize: "cover",
-      //   backgroundPosition: "center",
-      //   backgroundRepeat: "no-repeat",
-      // }}
-    >
+    <div className="flex h-screen bg-[#f4fbff]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0">
-        <Header />
+        <Header selectedAccount={selectedAccount} onAccountChange={handleAccountChange} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6 text-black">
-              <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
-              <span className="opacity-70">›</span>
-              <span className="text-xs sm:text-sm">Appointment Management</span>
+
+            {/* Top header area (pale-blue banner with centered search) */}
+            <div className="mb-8">
+              <div className="bg-transparent rounded-xl p-8 sm:p-10 md:p-12">
+                <div className="max-w-[1400px] mx-auto">
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900">My Placed Appointments</h1>
+                  <p className="text-sm text-gray-600 mt-1">Your recently placed appointments are listed below.</p>
+
+                  <div className="mt-8 flex justify-center">
+                    <div className="w-full max-w-4xl">
+                      <AppointmentFilters
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        selectedStatus={selectedStatus}
+                        setSelectedStatus={setSelectedStatus}
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                        compact={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
-              <AppointmentFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                selectedStatus={selectedStatus}
-                setSelectedStatus={setSelectedStatus}
-                selectedDate={selectedDate}
-                setSelectedDate={setSelectedDate}
-              />
-
-              <AppointmentTable
-                appointments={pagedAppointments}
-                getStatusColor={getStatusColor}
-                currentPage={currentPage}
-                totalAppointments={totalAppointments}
-                appointmentsPerPage={appointmentsPerPage}
-                onPreviousPage={handlePreviousPage}
-                onNextPage={handleNextPage}
-              />
+            <div className="max-w-[1400px] mx-auto">
+              <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 md:p-10 -mt-8">
+                {/* Card List */}
+                <MyAppointments
+                  appointments={pagedAppointments}
+                  loading={loading}
+                  searchTerm={searchTerm}
+                  selectedStatus={selectedStatus !== "All Status" ? selectedStatus : "All"}
+                  onView={handleViewDetails}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 }

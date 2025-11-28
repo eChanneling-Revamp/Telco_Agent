@@ -121,26 +121,13 @@ export default function Page() {
   };
 
   return (
-    <div
-      className="flex h-screen bg-[#f4fbff]"
-      // style={{
-      //   backgroundImage: `url('/assets/bg.png')`,
-      //   backgroundSize: "cover",
-      //   backgroundPosition: "center",
-      //   backgroundRepeat: "no-repeat",
-      // }}
-    >
+    <div className="flex h-screen bg-[#f4fbff]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0">
         <Header selectedAccount={selectedAccount} onAccountChange={handleAccountChange} />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6 text-black">
-              <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
-              <span className="opacity-70">›</span>
-              <span className="text-xs sm:text-sm">Appointment Management</span>
-            </div>
 
             {/* Top header area (pale-blue banner with centered search) */}
             <div className="mb-8">

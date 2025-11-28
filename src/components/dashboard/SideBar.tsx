@@ -94,7 +94,7 @@ const SideBar = () => {
 
           <NavLink href="/Appointments">
             <ClipboardList size={20} />
-            <span className="text-sm font-medium">My Appoinments</span>
+            <span className="text-sm font-medium">MyAppoinments</span>
           </NavLink>
 
           {/* <NavLink href="/reports">

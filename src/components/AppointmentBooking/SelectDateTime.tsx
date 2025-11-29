@@ -122,21 +122,21 @@ export default function SelectDateTime({
   ];
 
   return (
-    <div className="mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+    <div className="mx-auto p-6 px-2 py-6 mb-2">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
         Place an Appointment
       </h1>
 
       {/* Progress Bar */}
       <div className="flex items-center gap-2 mb-8">
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
           Select Date & Time
         </h2>
 
@@ -189,17 +189,17 @@ export default function SelectDateTime({
                   disabled={!slot.available}
                   className={`py-3 rounded-lg border-2 text-sm font-medium transition ${
                     selectedTime === slot.time
-                      ? "border-teal-400 bg-teal-500 text-white"
+                      ? "border-teal-400 bg-teal-400 text-white"
                       : slot.available
                       ? "border-teal-400 hover:border-teal-400 hover:bg-teal-100 text-gray-700 bg-teal-50"
                       : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <Clock size={16} />
+                    {/* <Clock size={16} /> */}
                     <span>{slot.time}</span>
                     {selectedTime === slot.time && (
-                      <CheckCircle size={16} className="text-teal-500" />
+                      <CheckCircle size={18} className="text-white font-bold" />
                     )}
                   </div>
                   {!slot.available && (

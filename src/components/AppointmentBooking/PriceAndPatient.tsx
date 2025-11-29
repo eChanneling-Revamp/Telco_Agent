@@ -38,19 +38,19 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
   };
 
   return (
-    <div className=" mx-auto p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
+    <div className=" mx-auto p-6 px-2 py-6 mb-2">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
       
       {/* Progress Bar */}
       <div  className="flex items-center gap-2 mb-8">
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Price & Refund Option</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Price & Refund Option</h2>
 
         {/* Selected Doctor Info */}
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -69,7 +69,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
         {/* Pricing */}
         <div className="mb-6">
           <p className="text-sm text-gray-500 mb-2">Base Price</p>
-          <p className="text-2xl font-bold text-blue-600">Rs. {basePrice}</p>
+          <p className="text-2xl font-bold text-blue-800">Rs. {basePrice}</p>
         </div>
 
         {/* Refund Option */}

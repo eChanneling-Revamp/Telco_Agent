@@ -45,7 +45,7 @@ export default function AppointmentBookingPage() {
   };
 
   const handleConfirm = async () => {
-    if (!selectedDoctor || !patientData) return;
+    if (!selectedDoctor || !patientData) return { success: false };
 
     try {
       const payload = {
@@ -75,20 +75,23 @@ export default function AppointmentBookingPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Appointment booked successfully!");
-        // Reset to step 1
-        setStep(1);
-        setSelectedDoctor(null);
-        setSelectedDate("");
-        setSelectedTime("");
-        setPatientData(null);
+        return { success: true };
       } else {
-        alert(data.error || "Booking failed");
+        return { success: false, error: data.error || "Booking failed" };
       }
     } catch (error) {
       console.error("Booking error:", error);
-      alert("Network error while booking");
+      return { success: false, error: "Network error while booking" };
     }
+  };
+
+  const handleBookingSuccess = () => {
+    // Reset to step 1 after successful booking
+    setStep(1);
+    setSelectedDoctor(null);
+    setSelectedDate("");
+    setSelectedTime("");
+    setPatientData(null);
   };
 
   return (
@@ -132,6 +135,7 @@ export default function AppointmentBookingPage() {
               patientData={patientData}
               onConfirm={handleConfirm}
               onBack={() => setStep(3)}
+              onSuccess={handleBookingSuccess}
             />
           )}
         </div>

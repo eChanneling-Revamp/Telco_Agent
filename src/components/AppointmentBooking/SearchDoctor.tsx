@@ -56,19 +56,19 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
   };
 
   return (
-    <div className=" mx-auto p-6 text-black">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
+    <div className=" mx-auto p-6 text-black px-2 py-6 mb-2">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
       
       {/* Progress Bar */}
       <div  className="flex items-center gap-2 mb-8">
-        <div className="flex-1 h-1 bg-blue-900 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
-        <div className="flex-1 h-1 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-blue-900 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
+        <div className="flex-1 h-2 bg-gray-400 rounded"></div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Search Doctor</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Search Doctor</h2>
         <p className="text-sm text-gray-500 mb-6">Search by Doctor Name or Hospital</p>
 
         {/* Search Input */}
@@ -148,7 +148,7 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
                   </div>
                   
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">Rs. {doctor.consultationFee}</p>
+                    <p className="text-2xl font-bold text-blue-700">Rs. {doctor.consultationFee}</p>
                     <button
                       onClick={() => onNext(doctor)}
                       className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"

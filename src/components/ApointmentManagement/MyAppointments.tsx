@@ -72,6 +72,13 @@ export default function MyAppointments({
       filtered = filtered.filter((apt) => apt.status === selectedStatus);
     }
 
+    // Sort by date descending (most recent first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time || '00:00'}`).getTime();
+      const dateB = new Date(`${b.date} ${b.time || '00:00'}`).getTime();
+      return dateB - dateA;
+    });
+
     setFilteredAppointments(filtered);
   }, [appointments, searchTerm, selectedStatus]);
 

@@ -1,6 +1,13 @@
 "use client";
 
-import { X, FileText, Mail, Download, AlertCircle, Printer } from "lucide-react";
+import {
+  X,
+  FileText,
+  Mail,
+  Download,
+  AlertCircle,
+  Printer,
+} from "lucide-react";
 import { useState, useRef } from "react";
 
 type AppointmentDetailsModalProps = {
@@ -37,7 +44,7 @@ export default function AppointmentDetailsModal({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Confirmed":
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-green-100 text-green-700";
       case "Cancelled":
         return "bg-rose-100 text-rose-700";
       case "Pending":
@@ -45,7 +52,7 @@ export default function AppointmentDetailsModal({
       case "Completed":
         return "bg-blue-100 text-blue-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-green-100 text-green-700";
     }
   };
 
@@ -93,7 +100,7 @@ export default function AppointmentDetailsModal({
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+        className="fixed inset-0 bg-black/50  z-40 transition-opacity"
         onClick={onClose}
       />
 
@@ -102,7 +109,9 @@ export default function AppointmentDetailsModal({
         <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Appointment Details</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Appointment Details
+            </h2>
             <button
               onClick={onClose}
               className="p-1 hover:bg-gray-100 rounded-lg transition"
@@ -131,7 +140,7 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
+                    className={`inline-block px-3 py-1 bg-green-100 rounded-full text-sm font-semibold ${getStatusColor(
                       appointment.status
                     )}`}
                   >
@@ -146,7 +155,9 @@ export default function AppointmentDetailsModal({
                     {appointment.doctor}
                   </p>
                   {appointment.specialization && (
-                    <p className="text-xs text-gray-600">{appointment.specialization}</p>
+                    <p className="text-xs text-gray-600">
+                      {appointment.specialization}
+                    </p>
                   )}
                 </div>
 
@@ -202,7 +213,9 @@ export default function AppointmentDetailsModal({
                   )}
                   <div className="border-t border-blue-200 pt-3 mt-3">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">Total:</span>
+                      <span className="font-semibold text-gray-900">
+                        Total:
+                      </span>
                       <span className="text-lg font-bold text-cyan-600">
                         Rs. {appointment.total || appointment.amount || 0}
                       </span>
@@ -218,7 +231,9 @@ export default function AppointmentDetailsModal({
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
                   <AlertCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-emerald-900">Refund Eligibility</p>
+                    <p className="font-semibold text-emerald-900">
+                      Refund Eligibility
+                    </p>
                     <p className="text-sm text-emerald-800">
                       {appointment.refundEligible}
                     </p>
@@ -234,7 +249,9 @@ export default function AppointmentDetailsModal({
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="text-sm text-gray-600 mb-2 block">Patient Name</label>
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Patient Name
+                  </label>
                   <input
                     type="text"
                     value={appointment.patientName}
@@ -243,7 +260,9 @@ export default function AppointmentDetailsModal({
                   />
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="text-sm text-gray-600 mb-2 block">Mobile Number</label>
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Mobile Number
+                  </label>
                   <input
                     type="text"
                     value={appointment.patientPhone || "N/A"}
@@ -256,33 +275,33 @@ export default function AppointmentDetailsModal({
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
                 <FileText className="w-5 h-5" />
                 Send SMS Receipt
               </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
                 <Mail className="w-5 h-5" />
                 Send Email Receipt
               </button>
               <button
                 onClick={downloadAsPdf}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
               >
                 <Download className="w-5 h-5" />
                 Download PDF
               </button>
               <button
                 onClick={downloadAsImage}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
               >
                 <Download className="w-5 h-5" />
                 Download Image
               </button>
-              <button className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
                 <X className="w-5 h-5" />
                 Cancel Appointment
               </button>
-              <button className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
                 <AlertCircle className="w-5 h-5" />
                 Cancel & Refund
               </button>
@@ -293,30 +312,44 @@ export default function AppointmentDetailsModal({
           <div ref={receiptRef} className="hidden">
             <div className="w-full max-w-2xl bg-white p-8">
               <div className="border-b-2 border-gray-300 pb-6 mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Appointment Receipt</h1>
-                <p className="text-gray-600 mt-2">ID: {appointment.appointmentId}</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Appointment Receipt
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  ID: {appointment.appointmentId}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
                   <p className="text-sm text-gray-600">Doctor</p>
-                  <p className="font-semibold text-gray-900">{appointment.doctor}</p>
+                  <p className="font-semibold text-gray-900">
+                    {appointment.doctor}
+                  </p>
                   {appointment.specialization && (
-                    <p className="text-sm text-gray-700">{appointment.specialization}</p>
+                    <p className="text-sm text-gray-700">
+                      {appointment.specialization}
+                    </p>
                   )}
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Status</p>
-                  <p className="font-semibold text-gray-900">{appointment.status}</p>
+                  <p className="font-semibold text-gray-900">
+                    {appointment.status}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Date & Time</p>
-                  <p className="font-semibold text-gray-900">{appointment.date}</p>
+                  <p className="font-semibold text-gray-900">
+                    {appointment.date}
+                  </p>
                   <p className="text-sm text-gray-700">{appointment.time}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Hospital</p>
-                  <p className="font-semibold text-gray-900">{appointment.hospital || "N/A"}</p>
+                  <p className="font-semibold text-gray-900">
+                    {appointment.hospital || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -324,32 +357,44 @@ export default function AppointmentDetailsModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Patient Name</p>
-                    <p className="font-semibold text-gray-900">{appointment.patientName}</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
-                    <p className="font-semibold text-gray-900">{appointment.patientPhone || "N/A"}</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientPhone || "N/A"}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {appointment.basePrice && (
                 <div className="mb-6">
-                  <p className="text-sm font-semibold text-gray-900 mb-3">Pricing</p>
+                  <p className="text-sm font-semibold text-gray-900 mb-3">
+                    Pricing
+                  </p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-700">Base Price:</span>
-                      <span className="font-semibold">Rs. {appointment.basePrice}</span>
+                      <span className="font-semibold">
+                        Rs. {appointment.basePrice}
+                      </span>
                     </div>
                     {appointment.refundDeposit && (
                       <div className="flex justify-between">
                         <span className="text-gray-700">Refund Deposit:</span>
-                        <span className="font-semibold">Rs. {appointment.refundDeposit}</span>
+                        <span className="font-semibold">
+                          Rs. {appointment.refundDeposit}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between border-t-2 border-gray-300 pt-2 mt-2">
                       <span className="font-bold text-gray-900">Total:</span>
-                      <span className="font-bold text-lg">Rs. {appointment.total || appointment.amount}</span>
+                      <span className="font-bold text-lg">
+                        Rs. {appointment.total || appointment.amount}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -357,8 +402,12 @@ export default function AppointmentDetailsModal({
 
               {appointment.refundEligible && (
                 <div className="bg-gray-100 p-4 rounded-lg mb-6">
-                  <p className="font-semibold text-gray-900 mb-2">Refund Eligibility</p>
-                  <p className="text-sm text-gray-700">{appointment.refundEligible}</p>
+                  <p className="font-semibold text-gray-900 mb-2">
+                    Refund Eligibility
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {appointment.refundEligible}
+                  </p>
                 </div>
               )}
 

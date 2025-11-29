@@ -8,7 +8,7 @@ type Doctor = {
   name: string;
   specialty: string;
   hospital: string;
-  consultationFee: number;
+  consultation_fee: number;
 };
 
 interface AppointmentSummaryProps {
@@ -113,7 +113,7 @@ export default function AppointmentSummary({
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">Base Price</span>
               <span className="font-medium text-gray-900">
-                Rs. {doctor.consultationFee}
+                Rs. {doctor.consultation_fee}
               </span>
             </div>
             {patientData.agreeRefund && (

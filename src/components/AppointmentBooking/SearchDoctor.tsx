@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Search, MapPin } from "lucide-react";
 
 type Doctor = {
   id: number;
@@ -12,7 +12,7 @@ type Doctor = {
   city: string;
   available: string;
   availabilityId: number;
-  consultationFee: number;
+  consultation_fee: number;
   slotsAvailable: number;
 };
 
@@ -33,16 +33,16 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
     const fetchDoctors = async () => {
       try {
         const params = new URLSearchParams();
-        if (searchTerm) params.append('search', searchTerm);
-        if (specialty) params.append('specialization', specialty);
-        if (hospital) params.append('hospitalType', hospital);
+        if (searchTerm) params.append("search", searchTerm);
+        if (specialty) params.append("specialization", specialty);
+        if (hospital) params.append("hospitalType", hospital);
 
-        const response = await fetch(`/api/appointments?${params.toString()}`);
+        const response = await fetch(`/api/doctors?${params.toString()}`);
         const data = await response.json();
-        
+
         setDoctors(data.doctors || []);
       } catch (error) {
-        console.error('Error fetching doctors:', error);
+        console.error("Error fetching doctors:", error);
         setDoctors([]);
       }
     };
@@ -57,10 +57,12 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
 
   return (
     <div className=" mx-auto p-6 text-black px-2 py-6 mb-2">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
-      
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        Place an Appointment
+      </h1>
+
       {/* Progress Bar */}
-      <div  className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 mb-8">
         <div className="flex-1 h-2 bg-blue-900 rounded"></div>
         <div className="flex-1 h-2 bg-gray-400 rounded"></div>
         <div className="flex-1 h-2 bg-gray-400 rounded"></div>
@@ -68,8 +70,12 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Search Doctor</h2>
-        <p className="text-sm text-gray-500 mb-6">Search by Doctor Name or Hospital</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Search Doctor
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Search by Doctor Name or Hospital
+        </p>
 
         {/* Search Input */}
         <input
@@ -117,7 +123,7 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
       {showResults && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-4">
-            <button 
+            <button
               onClick={() => setShowResults(false)}
               className="text-blue-900 font-medium"
             >
@@ -130,11 +136,18 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
 
           <div className="space-y-4">
             {filteredDoctors.map((doctor) => (
-              <div key={doctor.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div
+                key={doctor.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">{doctor.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{doctor.specialty}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {doctor.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {doctor.specialty}
+                    </p>
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <MapPin size={16} />
@@ -144,11 +157,15 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
                         <span>{doctor.hospital}</span>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">Experience: 10 years</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Experience: 10 years
+                    </p>
                   </div>
-                  
+
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-700">Rs. {doctor.consultationFee}</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      Rs. {doctor.consultation_fee}
+                    </p>
                     <button
                       onClick={() => onNext(doctor)}
                       className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"

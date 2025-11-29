@@ -56,7 +56,7 @@ const SideBar = () => {
 
   return (
     <div
-      className="w-56 h-screen text-white flex flex-col relative bg-white/90"
+      className="w-64 h-screen text-white flex flex-col relative bg-white/90"
       // style={{
       //   backgroundImage: `url('/assets/bg.png')`,
       //   backgroundSize: "cover",

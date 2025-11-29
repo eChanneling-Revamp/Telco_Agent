@@ -83,10 +83,10 @@ export default function Header({
   // }
 
   return (
-   <header className="bg-white px-6 py-4 flex justify-between items-center text-black"> <div className="flex items-center space-x-4">
+    <header className="bg-white px-6 py-4 flex justify-between items-center text-black shadow-md">
+      <div className="flex items-center space-x-4">
         <h1 className="text-xl font-semibold ">Telco Agent</h1>
       </div>
-
       <div className="flex items-center space-x-6">
         {/* Notifications */}
         <div className="relative">

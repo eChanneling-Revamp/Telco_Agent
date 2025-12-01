@@ -3,11 +3,10 @@
 import { useState, useEffect, useMemo } from "react";
 import Sidebar from "../../components/dashboard/SideBar";
 import Header from "../../components/dashboard/Header";
-import AppointmentTable from "../../components/ApointmentManagement/AppointmentTable";
 import AppointmentFilters from "../../components/ApointmentManagement/appointmentFilters";
 import MyAppointments from "../../components/ApointmentManagement/MyAppointments";
 import AppointmentDetailsModal from "../../components/ApointmentManagement/AppointmentDetailsModal";
-import Breadcrumb from "@/components/ApointmentManagement/Breadcrumb";
+
 // page-level icons not required
 
 export default function Page() {

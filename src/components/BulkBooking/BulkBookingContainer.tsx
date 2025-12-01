@@ -19,125 +19,103 @@ const SAMPLE_DOCTORS: Doctor[] = [
   { id: "6", name: "Dr. Robert Taylor", specialization: "Orthopedic", hospital: "Metro Medical Center", price: 3500 },
 ];
 
-export default function BulkBookingContainer() {
+export default function BulkBookingContainer({ cart, setCart }: any) {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(true);
+
   const [search, setSearch] = useState("");
   const [specialty, setSpecialty] = useState("All Specialties");
   const [hospital, setHospital] = useState("All Hospitals");
+
   const [appointmentDate, setAppointmentDate] = useState("");
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
   const [patientName, setPatientName] = useState("");
   const [patientNIC, setPatientNIC] = useState("");
   const [patientMobile, setPatientMobile] = useState("");
   const [refundDeposit, setRefundDeposit] = useState(false);
-  const [cart, setCart] = useState<Array<any>>([]);
+
   const [showBookingForm, setShowBookingForm] = useState(false);
 
   const specialties = useMemo(
-    () => ["All Specialties", ...Array.from(new Set(SAMPLE_DOCTORS.map(d => d.specialization)))],
+    () => ["All Specialties", ...new Set(SAMPLE_DOCTORS.map((d) => d.specialization))],
     []
   );
+
   const hospitals = useMemo(
-    () => ["All Hospitals", ...Array.from(new Set(SAMPLE_DOCTORS.map(d => d.hospital)))],
+    () => ["All Hospitals", ...new Set(SAMPLE_DOCTORS.map((d) => d.hospital))],
     []
   );
 
   const timeSlots = [
-    "09:00 AM","10:00 AM","11:00 AM",
-    "12:00 PM","02:00 PM","03:00 PM",
-    "04:00 PM","05:00 PM"
+    "09:00 AM", "10:00 AM", "11:00 AM",
+    "12:00 PM", "02:00 PM", "03:00 PM",
+    "04:00 PM", "05:00 PM"
   ];
 
-  const filtered = SAMPLE_DOCTORS.filter(d => {
+  const filtered = SAMPLE_DOCTORS.filter((d) => {
     if (specialty !== "All Specialties" && d.specialization !== specialty) return false;
     if (hospital !== "All Hospitals" && d.hospital !== hospital) return false;
     if (search && !(`${d.name} ${d.hospital}`.toLowerCase().includes(search.toLowerCase()))) return false;
     return true;
   });
 
-  const handleSelectDoctor = (doc: Doctor) => {
-    setSelectedDoctor(doc);
-    setShowDoctorList(false);
-  };
-
-  const handleTimeSlotClick = (time: string) => {
-    setSelectedTime(time);
-    setShowBookingForm(true);
-  };
-
-  const handleBack = () => {
-    setShowBookingForm(false);
-    setSelectedTime(null);
-  };
-
-  const handleChangeDoctor = () => {
-    setSelectedDoctor(null);
+  const resetForm = () => {
     setShowDoctorList(true);
+    setSelectedDoctor(null);
     setShowBookingForm(false);
     setSelectedTime(null);
+    setAppointmentDate("");
+    setPatientName("");
+    setPatientNIC("");
+    setPatientMobile("");
+    setRefundDeposit(false);
   };
 
-  /* ------------------------------------ DOCTOR SEARCH SCREEN ------------------------------------ */
-
+  /* ------------------ DOCTOR LIST SCREEN ------------------ */
   if (showDoctorList) {
     return (
-      <div className="w-full space-y-8 text-slate-800">
+      <div className="space-y-6">
 
-        {/* SEARCH BAR */}
-        <div>
-          <label className="block text-base font-semibold mb-2 text-slate-700">Search Doctor</label>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by doctor or hospital"
-            className="w-full rounded-xl border border-gray-300 px-5 py-4 text-slate-800 placeholder-slate-400
-                       focus:outline-none focus:border-blue-500"
-          />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search doctor or hospital..."
+          className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <select
+            value={specialty}
+            onChange={(e) => setSpecialty(e.target.value)}
+            className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {specialties.map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+
+          <select
+            value={hospital}
+            onChange={(e) => setHospital(e.target.value)}
+            className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {hospitals.map((h) => (
+              <option key={h}>{h}</option>
+            ))}
+          </select>
         </div>
 
-        {/* FILTERS */}
-        <div className="grid grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-semibold mb-1 text-slate-600">Specialty</label>
-            <select
-              value={specialty}
-              onChange={(e) => setSpecialty(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-slate-800
-                         focus:border-blue-500"
-            >
-              {specialties.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold mb-1 text-slate-600">Hospital</label>
-            <select
-              value={hospital}
-              onChange={(e) => setHospital(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-slate-800
-                         focus:border-blue-500"
-            >
-              {hospitals.map(h => <option key={h}>{h}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {/* DOCTOR LIST */}
-        <div className="space-y-4 w-full">
-          {filtered.map(doc => (
+        <div className="space-y-3">
+          {filtered.map((doc) => (
             <button
               key={doc.id}
-              className="w-full flex items-center justify-between p-5 rounded-xl border border-gray-200
-                        hover:border-blue-400 hover:bg-blue-50 transition"
-              onClick={() => handleSelectDoctor(doc)}
+              onClick={() => { setSelectedDoctor(doc); setShowDoctorList(false); }}
+              className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all"
             >
-              <div>
-                <p className="font-bold text-lg text-slate-800">{doc.name}</p>
-                <p className="text-sm text-slate-500">{doc.specialization} • {doc.hospital}</p>
-              </div>
-
-              <p className="text-slate-800 font-semibold">Rs. {doc.price}</p>
+              <div className="font-bold text-gray-900">{doc.name}</div>
+              <div className="text-sm text-gray-600">{doc.specialization} • {doc.hospital}</div>
+              <div className="text-sm font-semibold text-blue-600 mt-1">Rs. {doc.price}</div>
             </button>
           ))}
         </div>
@@ -146,58 +124,94 @@ export default function BulkBookingContainer() {
     );
   }
 
-  /* ------------------------------------ BOOKING FORM ------------------------------------ */
-
+  /* ------------------ BOOKING FORM ------------------ */
   if (showBookingForm && selectedTime) {
     return (
-      <div className="w-full space-y-8 text-slate-800">
+      <div className="space-y-6">
 
-        <div className="bg-blue-50 border border-gray-200 rounded-xl p-5">
-          <p className="text-sm font-semibold text-slate-600">Selected Slot</p>
-          <p className="text-xl font-bold text-slate-800">
-            {appointmentDate} at {selectedTime}
-          </p>
-        </div>
-
-        {/* FORM */}
-        <div className="space-y-6 w-full">
-          <div>
-            <label className="block font-semibold mb-2 text-slate-700">Patient Name</label>
-            <input className="w-full border border-gray-300 rounded-xl px-5 py-4 text-slate-800"
-              value={patientName} onChange={(e)=>setPatientName(e.target.value)} />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-2 text-slate-700">Patient NIC</label>
-            <input className="w-full border border-gray-300 rounded-xl px-5 py-4 text-slate-800"
-              value={patientNIC} onChange={(e)=>setPatientNIC(e.target.value)} />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-2 text-slate-700">Mobile Number</label>
-            <input className="w-full border border-gray-300 rounded-xl px-5 py-4 text-slate-800"
-              value={patientMobile} onChange={(e)=>setPatientMobile(e.target.value)} />
-          </div>
-
-          <div className="flex gap-3 items-center bg-blue-50 rounded-xl p-4 border border-gray-200">
-            <input type="checkbox" checked={refundDeposit} onChange={()=> setRefundDeposit(!refundDeposit)} />
-            <p className="text-slate-700">Add Rs. 250 Refundable Deposit</p>
+        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+          <div className="text-sm text-gray-500">Selected Slot</div>
+          <div className="font-bold text-lg text-gray-900">
+            {appointmentDate} • {selectedTime}
           </div>
         </div>
 
-        {/* BUTTONS */}
-        <div className="flex gap-4">
-          <button onClick={handleBack} className="flex-1 py-4 rounded-full border border-gray-300 text-slate-700">
+        <div className="space-y-4">
+          <input
+            value={patientName}
+            onChange={(e) => setPatientName(e.target.value)}
+            placeholder="Patient Name"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            value={patientNIC}
+            onChange={(e) => setPatientNIC(e.target.value)}
+            placeholder="NIC Number"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <input
+            value={patientMobile}
+            onChange={(e) => setPatientMobile(e.target.value)}
+            placeholder="Mobile Number"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
+          <label className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:bg-blue-100 transition-all">
+            <input
+              type="checkbox"
+              checked={refundDeposit}
+              onChange={() => setRefundDeposit(!refundDeposit)}
+              className="w-4 h-4"
+            />
+            <span className="text-gray-700">Add Rs. 250 Refundable Deposit</span>
+          </label>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              setShowBookingForm(false);
+              setSelectedTime(null);
+            }}
+            className="w-1/3 bg-gray-200 text-gray-700 rounded-full py-3 font-semibold hover:bg-gray-300 transition-all"
+          >
             Back
           </button>
 
           <button
             onClick={() => {
-              setCart([...cart, { selectedDoctor, appointmentDate, selectedTime, patientName }]);
-              alert("Added to cart");
-              handleBack();
+              if (!patientName || !patientNIC || !patientMobile) {
+                alert("Please fill all patient details");
+                return;
+              }
+
+              setCart([
+                ...cart,
+                {
+                  selectedDoctor,
+                  appointmentDate,
+                  selectedTime,
+                  patientName,
+                  patientNIC,
+                  patientMobile,
+                  refundDeposit,
+                },
+              ]);
+
+              // Reset form and return to doctor list
+              setSelectedDoctor(null);
+              setShowBookingForm(false);
+              setSelectedTime(null);
+              setAppointmentDate("");
+              setPatientName("");
+              setPatientNIC("");
+              setPatientMobile("");
+              setRefundDeposit(false);
+              setShowDoctorList(true);
             }}
-            className="flex-1 py-4 rounded-full bg-blue-600 text-white hover:bg-blue-700"
+            className="flex-1 bg-blue-600 text-white rounded-full py-3 font-semibold hover:bg-blue-700 transition-all shadow-md"
           >
             Add to Cart
           </button>
@@ -207,46 +221,43 @@ export default function BulkBookingContainer() {
     );
   }
 
-  /* ------------------------------------ TIME SLOT SCREEN ------------------------------------ */
-
+  /* ------------------ TIME SELECTION ------------------ */
   return (
-    <div className="w-full space-y-8 text-slate-800">
+    <div className="space-y-6">
 
-      <div className="bg-blue-50 border border-gray-200 rounded-xl p-5">
-        <p className="font-bold text-lg text-slate-800">{selectedDoctor?.name}</p>
-        <p className="text-slate-500">{selectedDoctor?.specialization} • {selectedDoctor?.hospital}</p>
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="font-bold text-gray-900">{selectedDoctor?.name}</div>
+        <div className="text-sm text-gray-600">{selectedDoctor?.specialization} • {selectedDoctor?.hospital}</div>
+        <div className="text-sm font-semibold text-blue-600 mt-1">Rs. {selectedDoctor?.price}</div>
 
         <button
-          onClick={handleChangeDoctor}
-          className="mt-4 px-6 py-2 border border-gray-300 text-slate-700 rounded-full hover:bg-blue-50 transition"
+          onClick={resetForm}
+          className="text-blue-600 underline mt-2 text-sm hover:text-blue-700"
         >
           Change Doctor
         </button>
       </div>
 
-      {/* DATE PICKER */}
       <div>
-        <label className="block font-semibold mb-2 text-slate-700">Appointment Date</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Select Appointment Date</label>
         <input
           type="date"
           value={appointmentDate}
           onChange={(e) => setAppointmentDate(e.target.value)}
-          className="w-full border border-gray-300 rounded-xl px-5 py-4 text-slate-800"
+          min={new Date().toISOString().split('T')[0]}
+          className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      {/* TIME SLOTS */}
       {appointmentDate && (
         <div>
-          <label className="block font-semibold mb-3 text-slate-700">Select Time</label>
-
-          <div className="grid grid-cols-4 gap-4 w-full">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Time Slot</label>
+          <div className="grid grid-cols-4 gap-3">
             {timeSlots.map((time) => (
               <button
                 key={time}
-                onClick={() => handleTimeSlotClick(time)}
-                className="border border-gray-300 text-slate-700 rounded-xl py-4
-                           hover:bg-blue-50 hover:border-blue-400 transition font-medium"
+                onClick={() => { setSelectedTime(time); setShowBookingForm(true); }}
+                className="border border-gray-300 rounded-xl py-3 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 transition-all"
               >
                 {time}
               </button>

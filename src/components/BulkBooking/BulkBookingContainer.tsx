@@ -1,23 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 type Doctor = {
   id: string;
   name: string;
-  specialization: string;
+  specialty: string;
   hospital: string;
-  price: number;
+  consultation_fee: number;
 };
-
-const SAMPLE_DOCTORS: Doctor[] = [
-  { id: "1", name: "Dr. Sarah Johnson", specialization: "Cardiologist", hospital: "City Hospital", price: 2500 },
-  { id: "2", name: "Dr. Michael Chen", specialization: "Neurologist", hospital: "Metro Medical Center", price: 3000 },
-  { id: "3", name: "Dr. Emily Brown", specialization: "Pediatrician", hospital: "Children's Hospital", price: 2000 },
-  { id: "4", name: "Dr. James Wilson", specialization: "Cardiologist", hospital: "Central Clinic", price: 2800 },
-  { id: "5", name: "Dr. Lisa Anderson", specialization: "Dermatologist", hospital: "City Hospital", price: 2200 },
-  { id: "6", name: "Dr. Robert Taylor", specialization: "Orthopedic", hospital: "Metro Medical Center", price: 3500 },
-];
 
 export default function BulkBookingContainer({ cart, setCart }: any) {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
@@ -37,26 +28,56 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
 
   const [showBookingForm, setShowBookingForm] = useState(false);
 
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch doctors from backend
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await fetch("/api/doctors");
+        const data = await response.json();
+        setDoctors(data.doctors || []);
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
   const specialties = useMemo(
-    () => ["All Specialties", ...new Set(SAMPLE_DOCTORS.map((d) => d.specialization))],
-    []
+    () => ["All Specialties", ...new Set(doctors.map((d) => d.specialty))],
+    [doctors]
   );
 
   const hospitals = useMemo(
-    () => ["All Hospitals", ...new Set(SAMPLE_DOCTORS.map((d) => d.hospital))],
-    []
+    () => ["All Hospitals", ...new Set(doctors.map((d) => d.hospital))],
+    [doctors]
   );
 
   const timeSlots = [
-    "09:00 AM", "10:00 AM", "11:00 AM",
-    "12:00 PM", "02:00 PM", "03:00 PM",
-    "04:00 PM", "05:00 PM"
+    "09:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "02:00 PM",
+    "03:00 PM",
+    "04:00 PM",
+    "05:00 PM",
   ];
 
-  const filtered = SAMPLE_DOCTORS.filter((d) => {
-    if (specialty !== "All Specialties" && d.specialization !== specialty) return false;
+  const filtered = doctors.filter((d) => {
+    if (specialty !== "All Specialties" && d.specialty !== specialty)
+      return false;
     if (hospital !== "All Hospitals" && d.hospital !== hospital) return false;
-    if (search && !(`${d.name} ${d.hospital}`.toLowerCase().includes(search.toLowerCase()))) return false;
+    if (
+      search &&
+      !`${d.name} ${d.hospital}`.toLowerCase().includes(search.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -76,7 +97,6 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
   if (showDoctorList) {
     return (
       <div className="space-y-6">
-
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -106,20 +126,34 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
           </select>
         </div>
 
-        <div className="space-y-3">
-          {filtered.map((doc) => (
-            <button
-              key={doc.id}
-              onClick={() => { setSelectedDoctor(doc); setShowDoctorList(false); }}
-              className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all"
-            >
-              <div className="font-bold text-gray-900">{doc.name}</div>
-              <div className="text-sm text-gray-600">{doc.specialization} • {doc.hospital}</div>
-              <div className="text-sm font-semibold text-blue-600 mt-1">Rs. {doc.price}</div>
-            </button>
-          ))}
-        </div>
-
+        {loading ? (
+          <div className="text-center py-8 text-gray-500">
+            Loading doctors...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">No doctors found</div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((doc) => (
+              <button
+                key={doc.id}
+                onClick={() => {
+                  setSelectedDoctor(doc);
+                  setShowDoctorList(false);
+                }}
+                className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition-all"
+              >
+                <div className="font-bold text-gray-900">{doc.name}</div>
+                <div className="text-sm text-gray-600">
+                  {doc.specialty} • {doc.hospital}
+                </div>
+                <div className="text-2xl font-semibold text-blue-800 mt-1 text-right">
+                  Rs. {doc.consultation_fee}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -128,7 +162,6 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
   if (showBookingForm && selectedTime) {
     return (
       <div className="space-y-6">
-
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
           <div className="text-sm text-gray-500">Selected Slot</div>
           <div className="font-bold text-lg text-gray-900">
@@ -141,21 +174,21 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
             value={patientName}
             onChange={(e) => setPatientName(e.target.value)}
             placeholder="Patient Name"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
           <input
             value={patientNIC}
             onChange={(e) => setPatientNIC(e.target.value)}
             placeholder="NIC Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
           <input
             value={patientMobile}
             onChange={(e) => setPatientMobile(e.target.value)}
             placeholder="Mobile Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
 
           <label className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:bg-blue-100 transition-all">
@@ -165,7 +198,9 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
               onChange={() => setRefundDeposit(!refundDeposit)}
               className="w-4 h-4"
             />
-            <span className="text-gray-700">Add Rs. 250 Refundable Deposit</span>
+            <span className="text-gray-700">
+              Add Rs. 250 Refundable Deposit
+            </span>
           </label>
         </div>
 
@@ -175,7 +210,7 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
               setShowBookingForm(false);
               setSelectedTime(null);
             }}
-            className="w-1/3 bg-gray-200 text-gray-700 rounded-full py-3 font-semibold hover:bg-gray-300 transition-all"
+            className="w-1/3 bg-gray-200 text-gray-700 rounded-lg py-3 font-semibold hover:bg-gray-300 transition-all"
           >
             Back
           </button>
@@ -211,12 +246,11 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
               setRefundDeposit(false);
               setShowDoctorList(true);
             }}
-            className="flex-1 bg-blue-600 text-white rounded-full py-3 font-semibold hover:bg-blue-700 transition-all shadow-md"
+            className="flex-1 bg-blue-900 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition-all shadow-md"
           >
             Add to Cart
           </button>
         </div>
-
       </div>
     );
   }
@@ -224,11 +258,14 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
   /* ------------------ TIME SELECTION ------------------ */
   return (
     <div className="space-y-6">
-
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div className="font-bold text-gray-900">{selectedDoctor?.name}</div>
-        <div className="text-sm text-gray-600">{selectedDoctor?.specialization} • {selectedDoctor?.hospital}</div>
-        <div className="text-sm font-semibold text-blue-600 mt-1">Rs. {selectedDoctor?.price}</div>
+        <div className="text-sm text-gray-600">
+          {selectedDoctor?.specialty} • {selectedDoctor?.hospital}
+        </div>
+        <div className="text-xl font-semibold text-blue-800 mt-1">
+          Rs. {selectedDoctor?.consultation_fee}
+        </div>
 
         <button
           onClick={resetForm}
@@ -239,24 +276,31 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Select Appointment Date</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Select Appointment Date
+        </label>
         <input
           type="date"
           value={appointmentDate}
           onChange={(e) => setAppointmentDate(e.target.value)}
-          min={new Date().toISOString().split('T')[0]}
+          min={new Date().toISOString().split("T")[0]}
           className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       {appointmentDate && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">Select Time Slot</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Select Time Slot
+          </label>
           <div className="grid grid-cols-4 gap-3">
             {timeSlots.map((time) => (
               <button
                 key={time}
-                onClick={() => { setSelectedTime(time); setShowBookingForm(true); }}
+                onClick={() => {
+                  setSelectedTime(time);
+                  setShowBookingForm(true);
+                }}
                 className="border border-gray-300 rounded-xl py-3 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 transition-all"
               >
                 {time}
@@ -265,7 +309,6 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
           </div>
         </div>
       )}
-
     </div>
   );
 }

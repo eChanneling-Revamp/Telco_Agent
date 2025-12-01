@@ -26,13 +26,16 @@ const SideBar = () => {
     href: string;
     children: React.ReactNode;
   }) => {
-    const isActive = pathname === href;
+    // Check if pathname starts with href (for nested routes)
+    const isActive = pathname.startsWith(href);
 
     return (
       <Link
         href={href}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 
-          ${isActive ? "bg-blue-950 text-" : "text-black/90 hover:bg-blue-50"}`}
+        ${
+          isActive ? "bg-blue-950 text-white" : "text-black/90 hover:bg-blue-50"
+        }`}
       >
         {children}
       </Link>

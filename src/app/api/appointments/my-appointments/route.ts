@@ -14,15 +14,11 @@ export async function GET(request: NextRequest) {
       userId: number;
     };
 
-    // support pagination and filtering via query params
+    // support filtering via query params
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const limit = parseInt(url.searchParams.get("limit") || "8", 10);
     const search = url.searchParams.get("search") || "";
     const status = url.searchParams.get("status") || "";
     const date = url.searchParams.get("date") || "";
-
-    const offset = (Math.max(page, 1) - 1) * limit;
 
     // Build WHERE clauses dynamically
     const whereClauses = ["a.user_id = $1"];
@@ -53,16 +49,14 @@ export async function GET(request: NextRequest) {
       ? "WHERE " + whereClauses.join(" AND ")
       : "";
 
-    // total count for pagination
+    // total count
     const countResult = await pool.query(
       `SELECT COUNT(*) AS total FROM appointments a JOIN doctors d ON a.doctor_id = d.id ${whereSql}`,
       params
     );
     const total = parseInt(countResult.rows[0].total, 10) || 0;
 
-    // Add limit/offset params
-    params.push(limit, offset);
-
+    // Fetch all appointments without limit/offset
     const result = await pool.query(
       `SELECT 
         a.id,
@@ -99,8 +93,7 @@ export async function GET(request: NextRequest) {
        LEFT JOIN doctor_availability da ON a.availability_id = da.id
        LEFT JOIN payments p ON a.id = p.appointment_id
        ${whereSql}
-       ORDER BY a.appointment_date DESC, a.appointment_time DESC
-       LIMIT $${idx} OFFSET $${idx + 1}`,
+       ORDER BY a.created_at DESC`,
       params
     );
 

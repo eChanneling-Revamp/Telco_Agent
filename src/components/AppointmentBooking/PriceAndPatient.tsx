@@ -6,7 +6,7 @@ type Doctor = {
   id: number;
   name: string;
   specialty: string;
-  consultationFee: number;
+  consultation_fee: number;
 };
 
 interface PriceAndPatientProps {
@@ -23,7 +23,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
   const [patientMobile, setPatientMobile] = useState("");
   const [agreeRefund, setAgreeRefund] = useState(false);
 
-  const basePrice = doctor.consultationFee;
+const basePrice = Number(doctor.consultation_fee);
   const refund = 250;
   const totalPrice = agreeRefund ? basePrice + refund : basePrice;
 

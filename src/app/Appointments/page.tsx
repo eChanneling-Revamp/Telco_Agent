@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../../components/dashboard/SideBar";
 import Header from "../../components/dashboard/Header";
 import AppointmentFilters from "../../components/ApointmentManagement/appointmentFilters";
 import MyAppointments from "../../components/ApointmentManagement/MyAppointments";
 import AppointmentDetailsModal from "../../components/ApointmentManagement/AppointmentDetailsModal";
-
-// page-level icons not required
 
 export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -16,13 +14,10 @@ export default function Page() {
   const [selectedAccount, setSelectedAccount] = useState("Account 1");
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  // page uses card view only
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(
     null
   );
-  const appointmentsPerPage = 8;
   const [totalAppointments, setTotalAppointments] = useState(0);
 
   const handleAccountChange = (account: string) => {
@@ -64,8 +59,6 @@ export default function Page() {
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        params.set("page", String(currentPage));
-        params.set("limit", String(appointmentsPerPage));
         if (searchTerm) params.set("search", searchTerm);
         if (selectedStatus && selectedStatus !== "All Status")
           params.set("status", selectedStatus);
@@ -112,21 +105,7 @@ export default function Page() {
     };
 
     fetchAppointments();
-  }, [currentPage, searchTerm, selectedStatus, selectedDate]);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
   }, [searchTerm, selectedStatus, selectedDate]);
-
-  // server returns paged results, use them directly
-  const pagedAppointments = appointments;
-
-  const handlePreviousPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-  const handleNextPage = () =>
-    setCurrentPage((p) =>
-      Math.min(Math.ceil(totalAppointments / appointmentsPerPage) || 1, p + 1)
-    );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -150,10 +129,10 @@ export default function Page() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">
             <div className="flex items-center gap-2 mb-4 sm:mb-2 text-black">
-            <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
-            <span className="opacity-70">›</span>
-            <span className="text-xs sm:text-sm">All Appointments</span>
-          </div>
+              <span className="text-xs sm:text-sm opacity-70">Dashboard</span>
+              <span className="opacity-70">›</span>
+              <span className="text-xs sm:text-sm">All Appointments</span>
+            </div>
             <div className="bg-transparent rounded-xl px-2 py-6 mb-2">
               <div className="max-w-[1400px] mx-auto">
                 <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900">
@@ -178,13 +157,10 @@ export default function Page() {
                 </div>
               </div>
             </div>
-            {/* </div> */}
 
             <div className="max-w-[1400px] mx-auto">
-              {/* <div className="rounded-xl shadow-lg p-6 sm:p-8 md:p-10 -mt-8"> */}
-              {/* Card List */}
               <MyAppointments
-                appointments={pagedAppointments}
+                appointments={appointments}
                 loading={loading}
                 searchTerm={searchTerm}
                 selectedStatus={
@@ -192,7 +168,6 @@ export default function Page() {
                 }
                 onView={handleViewDetails}
               />
-              {/* </div> */}
             </div>
           </div>
         </div>

@@ -47,10 +47,10 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -59,8 +59,8 @@ const LoginPage = () => {
 
       if (!response.ok) {
         setErrors({
-          email: '',
-          password: data.error || 'Login failed'
+          email: "",
+          password: data.error || "Login failed",
         });
         setIsLoading(false);
         return;
@@ -73,10 +73,10 @@ const LoginPage = () => {
 
       router.push("/AppointmentBooking");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       setErrors({
-        email: '',
-        password: 'An error occurred. Please try again.'
+        email: "",
+        password: "An error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -227,6 +227,16 @@ const LoginPage = () => {
                 "Sign in"
               )}
             </button>
+            <div className="mt-6 text-center text-sm flex items-center justify-center gap-1">
+              <p className="text-gray-600">Are you an admin?</p>
+              <button
+                onClick={() => router.push("/admin/login")}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Admin Login
+              </button>
+            </div>
+
             <div className="mt-8 text-center text-xs text-gray-500">
               © 2025 Sri Lanka Telecom - eChannelling
             </div>

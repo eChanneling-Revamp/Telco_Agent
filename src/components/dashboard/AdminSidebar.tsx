@@ -23,7 +23,7 @@ const AdminSidebar = () => {
     href: string;
     children: React.ReactNode;
   }) => {
-    const isActive = pathname === href;
+    const isActive = pathname === href || pathname?.startsWith(`${href}/`);
 
     return (
       <Link

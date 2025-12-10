@@ -23,6 +23,10 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
 
   const [patientName, setPatientName] = useState("");
   const [patientNIC, setPatientNIC] = useState("");
+  const [patientDOB, setPatientDOB] = useState("");
+  const [patientGender, setPatientGender] = useState("");
+  const [patientAge, setPatientAge] = useState("");
+
   const [patientMobile, setPatientMobile] = useState("");
   const [refundDeposit, setRefundDeposit] = useState(false);
 
@@ -160,8 +164,13 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
 
   /* ------------------ BOOKING FORM ------------------ */
   if (showBookingForm && selectedTime) {
+    const basePrice = Number(selectedDoctor?.consultation_fee || 0);
+    const refund = 250;
+    const totalPrice = refundDeposit ? basePrice + refund : basePrice;
+
     return (
       <div className="space-y-6">
+        {/* Slot Summary */}
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
           <div className="text-sm text-gray-500">Selected Slot</div>
           <div className="font-bold text-lg text-gray-900">
@@ -169,55 +178,152 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <input
-            value={patientName}
-            onChange={(e) => setPatientName(e.target.value)}
-            placeholder="Patient Name"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        {/* Patient Pricing */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Price & Refund Option
+          </h2>
 
-          <input
-            value={patientNIC}
-            onChange={(e) => setPatientNIC(e.target.value)}
-            placeholder="NIC Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          <p className="text-sm text-gray-500 mb-1">Base Price</p>
+          <p className="text-2xl font-bold text-blue-800 mb-4">
+            Rs. {basePrice}
+          </p>
 
-          <input
-            value={patientMobile}
-            onChange={(e) => setPatientMobile(e.target.value)}
-            placeholder="Mobile Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+          {/* Refund Box */}
+          <div className="border-2 border-blue-100 rounded-lg p-4 mb-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={refundDeposit}
+                onChange={() => setRefundDeposit(!refundDeposit)}
+                className="mt-1 w-5 h-5"
+              />
+              <div>
+                <p className="font-medium text-gray-900">
+                  Customer agrees to pay additional Rs. 250 for full refund
+                  eligibility
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  This amount makes the appointment fully refund-able if
+                  cancelled.
+                </p>
+              </div>
+            </label>
+          </div>
 
-          <label className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:bg-blue-100 transition-all">
-            <input
-              type="checkbox"
-              checked={refundDeposit}
-              onChange={() => setRefundDeposit(!refundDeposit)}
-              className="w-4 h-4"
-            />
-            <span className="text-gray-700">
-              Add Rs. 250 Refundable Deposit
-            </span>
-          </label>
+          {/* Total Price */}
+          <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-gray-900">Total Price</span>
+              <span className="text-2xl font-bold text-teal-600">
+                Rs. {totalPrice}
+              </span>
+            </div>
+          </div>
         </div>
 
+        {/* PATIENT DETAILS */}
+        <h3 className="text-lg font-semibold text-gray-900 mt-4">
+          Patient Details
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-black">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Name
+            </label>
+            <input
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              NIC Number
+            </label>
+            <input
+              value={patientNIC}
+              onChange={(e) => setPatientNIC(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mobile Number
+            </label>
+            <input
+              value={patientMobile}
+              onChange={(e) => setPatientMobile(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth
+            </label>
+            <input
+              type="date"
+              value={patientDOB}
+              onChange={(e) => setPatientDOB(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender
+            </label>
+            <select
+              value={patientGender}
+              onChange={(e) => setPatientGender(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Age
+            </label>
+            <input
+              type="number"
+              value={patientAge}
+              onChange={(e) => setPatientAge(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* ACTION BUTTONS */}
         <div className="flex gap-3">
           <button
             onClick={() => {
               setShowBookingForm(false);
               setSelectedTime(null);
             }}
-            className="w-1/3 bg-gray-200 text-gray-700 rounded-lg py-3 font-semibold hover:bg-gray-300 transition-all"
+            className="w-1/3 bg-gray-200 text-gray-700 rounded-lg py-3 font-semibold hover:bg-gray-300"
           >
             Back
           </button>
 
           <button
             onClick={() => {
-              if (!patientName || !patientNIC || !patientMobile) {
+              if (
+                !patientName ||
+                !patientNIC ||
+                !patientMobile ||
+                !patientDOB ||
+                !patientGender ||
+                !patientAge
+              ) {
                 alert("Please fill all patient details");
                 return;
               }
@@ -231,22 +337,17 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
                   patientName,
                   patientNIC,
                   patientMobile,
+                  patientDOB,
+                  patientGender,
+                  patientAge,
                   refundDeposit,
+                  totalPrice,
                 },
               ]);
 
-              // Reset form and return to doctor list
-              setSelectedDoctor(null);
-              setShowBookingForm(false);
-              setSelectedTime(null);
-              setAppointmentDate("");
-              setPatientName("");
-              setPatientNIC("");
-              setPatientMobile("");
-              setRefundDeposit(false);
-              setShowDoctorList(true);
+              resetForm();
             }}
-            className="flex-1 bg-blue-900 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition-all shadow-md"
+            className="flex-1 bg-blue-900 text-white rounded-lg py-3 font-semibold hover:bg-blue-800"
           >
             Add to Cart
           </button>

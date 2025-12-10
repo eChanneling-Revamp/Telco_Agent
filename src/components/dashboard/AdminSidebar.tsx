@@ -44,11 +44,11 @@ const AdminSidebar = () => {
   };
 
   const handleLogout = () => {
-    router.push("/admin/login");
+    router.push("/");
   };
 
   return (
-    <div className="w-1/6 h-screen text-white flex flex-col relative bg-white/90">
+    <div className="w-64 h-screen text-white flex flex-col relative bg-white/90">
       <div className="absolute inset-0 pointer-events-none" />
 
       <div className="relative z-10 flex flex-col h-full">

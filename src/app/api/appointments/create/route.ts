@@ -3,9 +3,17 @@ import pool from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 export async function POST(request: NextRequest) {
-  const client = await pool.connect();
-
+  let client;
+  
   try {
+    // Add timeout to connection attempt
+    client = await Promise.race([
+      pool.connect(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+      )
+    ]);
+
     const token = request.cookies.get("token")?.value;
     let userId = null;
 
@@ -24,9 +32,13 @@ export async function POST(request: NextRequest) {
     const {
       doctorId,
       availabilityId,
-      patientName,
-      patientPhone,
-      patientEmail,
+      name: patientName,
+      mobile: patientPhone,
+      email: patientEmail,
+      nic: patientNIC,
+      dob: patientDOB,
+      gender: patientGender,
+      age: patientAge,
       sltPhone,
       notes,
       appointmentDate,
@@ -56,7 +68,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use sltPhone if provided, otherwise use patientPhone, otherwise use null
     const finalSltPhone = sltPhone || patientPhone || null;
 
     if (!finalSltPhone) {
@@ -81,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     const doctor = doctorResult.rows[0];
 
-    // Check if slot is available (optional check if availabilityId is provided)
+    // Check if slot is available
     if (availabilityId) {
       const availabilityCheck = await client.query(
         `SELECT * FROM doctor_availability 
@@ -99,14 +110,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Normalize appointmentTime: extract start time if a range was passed
+    // Normalize appointmentTime
     let appointmentTimeValue: string = appointmentTime;
     if (typeof appointmentTimeValue === "string") {
-      // If time is passed as a range like "14:00:00 - 17:00:00" or "2:00 PM–5:00 PM", take start
       const parts = appointmentTimeValue.split(/[-–]/);
       appointmentTimeValue = parts[0].trim();
 
-      // If time contains AM/PM convert to 24h HH:MM:SS
       const ampmMatch = appointmentTimeValue.match(
         /(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)/
       );
@@ -119,7 +128,6 @@ export async function POST(request: NextRequest) {
         if (ampm === "am" && hh === 12) hh = 0;
         appointmentTimeValue = `${String(hh).padStart(2, "0")}:${mm}:${ss}`;
       } else {
-        // If time is HH:MM or HH:MM:SS ensure seconds present
         const hhmm = appointmentTimeValue.match(
           /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/
         );
@@ -136,10 +144,11 @@ export async function POST(request: NextRequest) {
     const appointmentResult = await client.query(
       `INSERT INTO appointments (
         user_id, doctor_id, availability_id, patient_name, patient_phone,
-        patient_email, slt_phone, notes, appointment_date, appointment_time,
+        patient_email, patient_nic, patient_dob, patient_gender, patient_age,
+        slt_phone, notes, appointment_date, appointment_time,
         payment_method, total_amount, is_member, send_sms, send_email, status,
         doctor_name, specialty, hospital, refund_eligible
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       RETURNING *`,
       [
         userId,
@@ -148,6 +157,10 @@ export async function POST(request: NextRequest) {
         patientName,
         patientPhone || finalSltPhone,
         patientEmail || null,
+        patientNIC || null,
+        patientDOB || null,
+        patientGender || null,
+        patientAge ? parseInt(patientAge) : null,
         finalSltPhone,
         notes || null,
         appointmentDate,
@@ -167,7 +180,7 @@ export async function POST(request: NextRequest) {
 
     const appointment = appointmentResult.rows[0];
 
-    // Update availability count (if availabilityId was provided)
+    // Update availability count
     if (availabilityId) {
       await client.query(
         `UPDATE doctor_availability 
@@ -208,13 +221,45 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    await client.query("ROLLBACK");
     console.error("Error creating appointment:", error);
+    
+    // Specific error handling
+    if (error.message === 'Database connection timeout') {
+      return NextResponse.json(
+        { 
+          error: "Database connection failed", 
+          message: "Unable to connect to database. Please try again later." 
+        },
+        { status: 503 }
+      );
+    }
+    
+    if (error.code === 'ETIMEDOUT') {
+      return NextResponse.json(
+        { 
+          error: "Database timeout", 
+          message: "Database connection timed out. Please check your database configuration." 
+        },
+        { status: 503 }
+      );
+    }
+    
+    // Try to rollback if client exists
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error("Rollback failed:", rollbackError);
+      }
+    }
+    
     return NextResponse.json(
       { error: "Failed to create appointment", message: error.message },
       { status: 500 }
     );
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 }

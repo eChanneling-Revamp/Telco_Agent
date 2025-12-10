@@ -65,8 +65,12 @@ export async function GET(request: NextRequest) {
         a.patient_name,
         a.patient_phone,
         a.patient_email,
+        a.patient_nic,
+        TO_CHAR(a.patient_dob, 'YYYY-MM-DD') as patient_dob,
+        a.patient_gender,
+        a.patient_age,
         a.slt_phone,
-        a.appointment_date,
+        TO_CHAR(a.appointment_date, 'YYYY-MM-DD') as appointment_date,
         a.appointment_time,
         a.status,
         a.payment_method,
@@ -93,7 +97,7 @@ export async function GET(request: NextRequest) {
        LEFT JOIN doctor_availability da ON a.availability_id = da.id
        LEFT JOIN payments p ON a.id = p.appointment_id
        ${whereSql}
-       ORDER BY a.created_at DESC`,
+      ORDER BY a.created_at DESC`,
       params
     );
 
@@ -104,8 +108,12 @@ export async function GET(request: NextRequest) {
       patient_name: row.patient_name,
       patient_phone: row.patient_phone,
       patient_email: row.patient_email,
+      patient_nic: row.patient_nic,
+      patient_dob: row.patient_dob, // Already formatted as YYYY-MM-DD
+      patient_gender: row.patient_gender,
+      patient_age: row.patient_age,
       slt_phone: row.slt_phone,
-      appointment_date: row.appointment_date,
+      appointment_date: row.appointment_date, // Already formatted as YYYY-MM-DD
       appointment_time: row.appointment_time,
       status: row.status,
       payment_method: row.payment_method,

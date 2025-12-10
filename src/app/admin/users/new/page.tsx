@@ -39,9 +39,9 @@ const AddNewAgentPage = (props: Props) => {
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader title="Add New Agent" />
+        <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push("/admin/users")}
@@ -208,7 +208,7 @@ const AddNewAgentPage = (props: Props) => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors mt-8 cursor-pointer"
+                className="w-full bg-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors mt-8 cursor-pointer"
               >
                 Create Agent
               </button>

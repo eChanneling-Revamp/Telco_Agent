@@ -12,10 +12,10 @@ export default function AllAppointmentsPage() {
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeader title="All Appointments" />
+        <AdminHeader />
 
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto p-8">
+          <div className="mx-auto">
             <h1 className="text-4xl font-bold text-gray-900 mb-8">All Appointments</h1>
 
             <AllAppointmentsList initialAppointments={appointments} />

@@ -10,7 +10,7 @@ interface AdminHeaderProps {
 
 interface AdminData {
   id: number;
-  email: string;
+  adminId: string;
   name: string;
 }
 
@@ -34,7 +34,7 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
       // Default admin data if not found
       setAdminData({
         id: 1,
-        email: 'admin@telco.com',
+        adminId: 'ADM-001',
         name: 'Admin User'
       });
     }
@@ -48,17 +48,17 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
     localStorage.removeItem('adminData');
     
     // Redirect to login page
-    router.push('/admin/login');
+    router.push('/');
   };
 
   // Display name logic
-  const displayName = adminData?.name || adminData?.email?.split("@")[0] || "Admin";
-  const adminEmail = adminData?.email || "";
+  const displayName = adminData?.name || adminData?.adminId?.split("@")[0] || "Admin";
+  const adminId = adminData?.adminId || "";
 
   return (
     <header className="bg-white px-6 py-4 flex justify-between items-center text-black shadow-md">
       <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-xl font-semibold ">Admin Portal</h1>
       </div>
       
       <div className="flex items-center space-x-6">
@@ -75,8 +75,8 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
               <span className="text-black text-sm font-medium">
                 {displayName}
               </span>
-              {adminEmail && (
-                <span className="text-black/70 text-xs">{adminEmail}</span>
+              {adminId && (
+                <span className="text-black/70 text-xs">{adminId}</span>
               )}
             </div>
             <ChevronDown className="h-4 w-4 text-black" />

@@ -16,7 +16,7 @@ type AppointmentDetailsModalProps = {
   appointment?: {
     id: number;
     appointmentId: string;
-    status: "Confirmed" | "Cancelled" | "Pending" | "Completed";
+    status: string;
     doctor: string;
     specialization?: string;
     hospital?: string;
@@ -25,6 +25,10 @@ type AppointmentDetailsModalProps = {
     amount?: number;
     patientName: string;
     patientPhone?: string;
+    patientNIC?: string;
+    patientDOB?: string;
+    patientGender?: string;
+    patientAge?: number;
     basePrice?: number;
     refundDeposit?: number;
     total?: number;
@@ -42,22 +46,27 @@ export default function AppointmentDetailsModal({
   if (!isOpen || !appointment) return null;
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Confirmed":
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case "confirmed":
         return "bg-green-100 text-green-700";
-      case "Cancelled":
+      case "cancelled":
         return "bg-rose-100 text-rose-700";
-      case "Pending":
+      case "pending":
         return "bg-amber-100 text-amber-700";
-      case "Completed":
+      case "completed":
         return "bg-blue-100 text-blue-700";
       default:
         return "bg-green-100 text-green-700";
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+  };
+
   const downloadAsImage = () => {
-    // Open print dialog where user can save as PDF or image
     if (receiptRef.current) {
       const printWindow = window.open("", "", "width=800,height=600");
       if (printWindow) {
@@ -71,7 +80,6 @@ export default function AppointmentDetailsModal({
   };
 
   const downloadAsPdf = () => {
-    // Open print dialog for PDF download
     if (receiptRef.current) {
       const printWindow = window.open("", "", "width=800,height=600");
       if (printWindow) {
@@ -100,7 +108,7 @@ export default function AppointmentDetailsModal({
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50  z-40 transition-opacity"
+        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
       />
 
@@ -140,11 +148,11 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
-                    className={`inline-block px-3 py-1 bg-green-100 rounded-full text-sm font-semibold ${getStatusColor(
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
                       appointment.status
                     )}`}
                   >
-                    {appointment.status}
+                    {getStatusLabel(appointment.status)}
                   </span>
                 </div>
 
@@ -175,7 +183,7 @@ export default function AppointmentDetailsModal({
                   <p className="text-base font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time}</p>
+                  <p className="text-sm text-gray-700">{appointment.time || "N/A"}</p>
                 </div>
 
                 {/* Total Amount */}
@@ -203,7 +211,7 @@ export default function AppointmentDetailsModal({
                       </span>
                     </div>
                   )}
-                  {appointment.refundDeposit && (
+                  {appointment.refundDeposit > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-700">Refund Deposit:</span>
                       <span className="font-semibold text-cyan-600">
@@ -226,7 +234,7 @@ export default function AppointmentDetailsModal({
             )}
 
             {/* Refund Eligibility */}
-            {appointment.refundEligible && (
+            {appointment.refundEligible && appointment.refundDeposit > 0 && (
               <div>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
                   <AlertCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -254,7 +262,7 @@ export default function AppointmentDetailsModal({
                   </label>
                   <input
                     type="text"
-                    value={appointment.patientName}
+                    value={appointment.patientName || "N/A"}
                     readOnly
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
                   />
@@ -266,6 +274,59 @@ export default function AppointmentDetailsModal({
                   <input
                     type="text"
                     value={appointment.patientPhone || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    NIC Number
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientNIC || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Date of Birth
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientDOB || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Gender
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      appointment.patientGender
+                        ? appointment.patientGender.charAt(0).toUpperCase() +
+                          appointment.patientGender.slice(1)
+                        : "N/A"
+                    }
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Age
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      appointment.patientAge
+                        ? `${appointment.patientAge} years`
+                        : "N/A"
+                    }
                     readOnly
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
                   />
@@ -297,11 +358,11 @@ export default function AppointmentDetailsModal({
                 <Download className="w-5 h-5" />
                 Download Image
               </button>
-              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
                 <X className="w-5 h-5" />
                 Cancel Appointment
               </button>
-              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
                 <AlertCircle className="w-5 h-5" />
                 Cancel & Refund
               </button>
@@ -335,7 +396,7 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600">Status</p>
                   <p className="font-semibold text-gray-900">
-                    {appointment.status}
+                    {getStatusLabel(appointment.status)}
                   </p>
                 </div>
                 <div>
@@ -343,7 +404,7 @@ export default function AppointmentDetailsModal({
                   <p className="font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time}</p>
+                  <p className="text-sm text-gray-700">{appointment.time || "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Hospital</p>
@@ -354,17 +415,49 @@ export default function AppointmentDetailsModal({
               </div>
 
               <div className="border-t-2 border-b-2 border-gray-300 py-4 mb-6">
+                <p className="text-sm font-semibold text-gray-900 mb-3">
+                  Patient Information
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Patient Name</p>
                     <p className="font-semibold text-gray-900">
-                      {appointment.patientName}
+                      {appointment.patientName || "N/A"}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-semibold text-gray-900">
                       {appointment.patientPhone || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">NIC</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientNIC || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date of Birth</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientDOB || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Gender</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientGender
+                        ? appointment.patientGender.charAt(0).toUpperCase() +
+                          appointment.patientGender.slice(1)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Age</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientAge
+                        ? `${appointment.patientAge} years`
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -382,7 +475,7 @@ export default function AppointmentDetailsModal({
                         Rs. {appointment.basePrice}
                       </span>
                     </div>
-                    {appointment.refundDeposit && (
+                    {appointment.refundDeposit > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-700">Refund Deposit:</span>
                         <span className="font-semibold">
@@ -400,7 +493,7 @@ export default function AppointmentDetailsModal({
                 </div>
               )}
 
-              {appointment.refundEligible && (
+              {appointment.refundEligible && appointment.refundDeposit > 0 && (
                 <div className="bg-gray-100 p-4 rounded-lg mb-6">
                   <p className="font-semibold text-gray-900 mb-2">
                     Refund Eligibility

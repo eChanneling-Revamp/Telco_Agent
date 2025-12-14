@@ -21,9 +21,12 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
   const [patientName, setPatientName] = useState("");
   const [patientNIC, setPatientNIC] = useState("");
   const [patientMobile, setPatientMobile] = useState("");
+  const [patientDOB, setPatientDOB] = useState("");
+  const [patientGender, setPatientGender] = useState("");
+  const [patientAge, setPatientAge] = useState("");
   const [agreeRefund, setAgreeRefund] = useState(false);
 
-const basePrice = Number(doctor.consultation_fee);
+  const basePrice = Number(doctor.consultation_fee);
   const refund = 250;
   const totalPrice = agreeRefund ? basePrice + refund : basePrice;
 
@@ -32,6 +35,9 @@ const basePrice = Number(doctor.consultation_fee);
       name: patientName,
       nic: patientNIC,
       mobile: patientMobile,
+      dob: patientDOB,
+      gender: patientGender,
+      age: patientAge,
       agreeRefund,
       totalPrice
     });
@@ -108,7 +114,7 @@ const basePrice = Number(doctor.consultation_fee);
         {/* Patient Details Section */}
         <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-8">Patient Details</h3>
         
-        <div className="space-y-4 mb-6 text-black">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-black">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
             <input
@@ -141,6 +147,43 @@ const basePrice = Number(doctor.consultation_fee);
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+            <input
+              type="date"
+              value={patientDOB}
+              onChange={(e) => setPatientDOB(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <select
+              value={patientGender}
+              onChange={(e) => setPatientGender(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+            <input
+              type="number"
+              value={patientAge}
+              onChange={(e) => setPatientAge(e.target.value)}
+              placeholder="25"
+              min="0"
+              max="150"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
         </div>
 
         {/* Navigation Buttons */}
@@ -153,7 +196,7 @@ const basePrice = Number(doctor.consultation_fee);
           </button>
           <button
             onClick={handleContinue}
-            disabled={!patientName || !patientNIC || !patientMobile}
+            disabled={!patientName || !patientNIC || !patientMobile || !patientDOB || !patientGender || !patientAge}
             className="flex-1 bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Review Appointment

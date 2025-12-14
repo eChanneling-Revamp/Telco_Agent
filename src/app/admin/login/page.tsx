@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import Image from "next/image";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
-const LoginPage = () => {
+const AdminLoginPage = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +18,8 @@ const LoginPage = () => {
     return emailRegex.test(email);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setErrors({ email: "", password: "" });
     let hasError = false;
     const newErrors = { email: "", password: "" };
@@ -44,48 +45,25 @@ const LoginPage = () => {
       return;
     }
 
+    // Frontend-only implementation - no backend API call
     setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({
-          email: "",
-          password: data.error || "Login failed",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Store user info (optional, since it's in cookie)
+    // Simulate a delay for frontend demonstration
+    setTimeout(() => {
+      // Store user info in localStorage if "Remember me" is checked
       if (rememberMe) {
-        localStorage.setItem("userEmail", email);
+        localStorage.setItem("adminEmail", email);
       }
 
-      router.push("/AppointmentBooking");
-    } catch (error) {
-      console.error("Login error:", error);
-      setErrors({
-        email: "",
-        password: "An error occurred. Please try again.",
-      });
-    } finally {
+      // Redirect to admin dashboard
+      router.push("/admin/dashboard");
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSubmit();
+      handleSubmit(e as any);
     }
   };
 
@@ -94,21 +72,21 @@ const LoginPage = () => {
       <div className="flex-1 flex flex-col justify-center items-center">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="flex items-center justify-center mb-4">
               <Image
                 src="/assets/logo.png"
                 alt="Logo"
                 width={220}
                 height={100}
                 className="mx-auto "
-              />
+              />{" "}
             </div>
-            <p className="text-gray-500 text-sm">Connecting Healthcare</p>
+            <p className="text-gray-500 text-sm">Admin Portal</p>
           </div>
           <div className="space-y-5">
             <div>
               <div className="block text-sm font-medium text-gray-700 mb-2">
-                Agent ID / Email <span className="text-red-500">*</span>
+                Admin Email <span className="text-red-500">*</span>
               </div>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -120,7 +98,7 @@ const LoginPage = () => {
                     if (errors.email) setErrors({ ...errors, email: "" });
                   }}
                   onKeyPress={handleKeyPress}
-                  placeholder="Enter your email"
+                  placeholder="Enter your admin email"
                   className={`w-full pl-10 pr-4 py-3 border ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   } rounded-lg focus:outline-none focus:ring-2 ${
@@ -228,21 +206,21 @@ const LoginPage = () => {
               )}
             </button>
             <div className="mt-6 text-center text-sm flex items-center justify-center gap-1">
-              <p className="text-gray-600">Are you an admin?</p>
+              <p className="text-gray-600">Are you an agent?</p>
               <button
-                onClick={() => router.push("/admin/login")}
+                onClick={() => router.push("/login")}
                 className="text-blue-600 hover:text-blue-800 font-medium"
               >
-                Admin Login
+                Agent Login
               </button>
             </div>
 
             <div className="mt-8 text-center text-xs text-gray-500">
               © 2025 Sri Lanka Telecom - eChannelling
             </div>
-            <div className="mt-8 text-center text-xs text-gray-500">
-              Use: test@example.com / password123 to login
-            </div>
+            {/* <div className="mt-8 text-center text-xs text-gray-500">
+              Use: admin@example.com / admin123 to login
+            </div> */}
           </div>
         </div>
       </div>
@@ -250,4 +228,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default AdminLoginPage;

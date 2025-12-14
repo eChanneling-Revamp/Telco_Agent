@@ -6,13 +6,14 @@ import {
   Mail,
   Download,
   AlertCircle,
-  Printer,
+  CheckCircle,
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type AppointmentDetailsModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAppointmentCancelled?: () => void;
   appointment?: {
     id: number;
     appointmentId: string;
@@ -39,9 +40,25 @@ type AppointmentDetailsModalProps = {
 export default function AppointmentDetailsModal({
   isOpen,
   onClose,
+  onAppointmentCancelled,
   appointment,
 }: AppointmentDetailsModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [cancellationSuccess, setCancellationSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Local state to track current appointment status
+  const [currentStatus, setCurrentStatus] = useState(appointment?.status || "");
+
+  // Update local status when appointment prop changes
+  useEffect(() => {
+    if (appointment?.status) {
+      setCurrentStatus(appointment.status);
+    }
+  }, [appointment?.status]);
 
   if (!isOpen || !appointment) return null;
 
@@ -104,6 +121,99 @@ export default function AppointmentDetailsModal({
     }
   };
 
+  const hasRefundDeposit =
+    appointment.refundDeposit && appointment.refundDeposit > 0;
+
+  const handleCancelAppointment = async () => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/appointments/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId: appointment.id,
+          withRefund: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel appointment");
+      }
+
+      setIsProcessing(false);
+      setShowCancelModal(false);
+
+      // Update local status immediately
+      setCurrentStatus("cancelled");
+
+      setCancellationSuccess(true);
+
+      // Auto close success message and refresh after 3 seconds
+      setTimeout(() => {
+        setCancellationSuccess(false);
+        if (onAppointmentCancelled) {
+          onAppointmentCancelled();
+        }
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setError(err.message);
+      console.error("Error cancelling appointment:", err);
+    }
+  };
+
+  const handleCancelWithRefund = async () => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/appointments/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId: appointment.id,
+          withRefund: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process refund");
+      }
+
+      setIsProcessing(false);
+      setShowRefundModal(false);
+
+      // Update local status immediately
+      setCurrentStatus("cancelled");
+
+      setCancellationSuccess(true);
+
+      // Auto close success message and refresh after 3 seconds
+      setTimeout(() => {
+        setCancellationSuccess(false);
+        if (onAppointmentCancelled) {
+          onAppointmentCancelled();
+        }
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setError(err.message);
+      console.error("Error processing refund:", err);
+    }
+  };
+
   return (
     <>
       {/* Overlay */}
@@ -144,15 +254,15 @@ export default function AppointmentDetailsModal({
                   </p>
                 </div>
 
-                {/* Status */}
+                {/* Status - Use currentStatus instead of appointment.status */}
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
                     className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
-                      appointment.status
+                      currentStatus
                     )}`}
                   >
-                    {getStatusLabel(appointment.status)}
+                    {getStatusLabel(currentStatus)}
                   </span>
                 </div>
 
@@ -183,7 +293,9 @@ export default function AppointmentDetailsModal({
                   <p className="text-base font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time || "N/A"}</p>
+                  <p className="text-sm text-gray-700">
+                    {appointment.time || "N/A"}
+                  </p>
                 </div>
 
                 {/* Total Amount */}
@@ -334,7 +446,7 @@ export default function AppointmentDetailsModal({
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Conditional layout based on refund deposit */}
             <div className="grid grid-cols-2 gap-3">
               <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
                 <FileText className="w-5 h-5" />
@@ -358,14 +470,31 @@ export default function AppointmentDetailsModal({
                 <Download className="w-5 h-5" />
                 Download Image
               </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
+              <button
+                className={`flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                  !hasRefundDeposit ? "col-span-2" : ""
+                }`}
+                onClick={() => setShowCancelModal(true)}
+                disabled={currentStatus === "cancelled"}
+              >
                 <X className="w-5 h-5" />
-                Cancel Appointment
+                {currentStatus === "cancelled"
+                  ? "Appointment Cancelled"
+                  : "Cancel Appointment"}
               </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
-                <AlertCircle className="w-5 h-5" />
-                Cancel & Refund
-              </button>
+              {/* Only show Cancel & Refund button if there's a refund deposit */}
+              {hasRefundDeposit && (
+                <button
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowRefundModal(true)}
+                  disabled={currentStatus === "cancelled"}
+                >
+                  <AlertCircle className="w-5 h-5" />
+                  {currentStatus === "cancelled"
+                    ? "Cancelled"
+                    : "Cancel & Refund"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -396,7 +525,7 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600">Status</p>
                   <p className="font-semibold text-gray-900">
-                    {getStatusLabel(appointment.status)}
+                    {getStatusLabel(currentStatus)}
                   </p>
                 </div>
                 <div>
@@ -404,7 +533,9 @@ export default function AppointmentDetailsModal({
                   <p className="font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time || "N/A"}</p>
+                  <p className="text-sm text-gray-700">
+                    {appointment.time || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Hospital</p>
@@ -512,6 +643,140 @@ export default function AppointmentDetailsModal({
           </div>
         </div>
       </div>
+
+      {/* Cancel Appointment Confirmation Modal */}
+      {showCancelModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-[60]"
+            onClick={() => !isProcessing && setShowCancelModal(false)}
+          />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                  Cancel Appointment?
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  Are you sure you want to cancel this appointment with{" "}
+                  {appointment.doctor}? This action cannot be undone.
+                </p>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCancelModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    disabled={isProcessing}
+                  >
+                    No, Keep It
+                  </button>
+                  <button
+                    onClick={handleCancelAppointment}
+                    className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Cancelling..." : "Yes, Cancel"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Cancel & Refund Confirmation Modal */}
+      {showRefundModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-[60]"
+            onClick={() => !isProcessing && setShowRefundModal(false)}
+          />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-emerald-100 rounded-full mb-4">
+                  <AlertCircle className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                  Cancel & Request Refund?
+                </h3>
+                <p className="text-gray-600 text-center mb-4">
+                  Are you sure you want to cancel this appointment and request a
+                  refund?
+                </p>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-700">
+                      Refund Amount:
+                    </span>
+                    <span className="text-lg font-bold text-emerald-600">
+                      Rs. {appointment.refundDeposit}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    {appointment.refundEligible ||
+                      "Refund will be processed within 5-7 business days"}
+                  </p>
+                </div>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowRefundModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    disabled={isProcessing}
+                  >
+                    No, Keep It
+                  </button>
+                  <button
+                    onClick={handleCancelWithRefund}
+                    className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Yes, Refund"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Success Message */}
+      {cancellationSuccess && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[60]" />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                  <CheckCircle className="w-10 h-10 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {hasRefundDeposit
+                    ? "Refund Initiated!"
+                    : "Appointment Cancelled"}
+                </h3>
+                <p className="text-gray-600">
+                  {hasRefundDeposit
+                    ? `Your appointment has been cancelled and a refund of Rs. ${appointment.refundDeposit} will be processed within 5-7 business days.`
+                    : "Your appointment has been successfully cancelled."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

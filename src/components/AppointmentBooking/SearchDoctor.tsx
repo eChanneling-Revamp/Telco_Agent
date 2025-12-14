@@ -25,38 +25,32 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
   const [specialty, setSpecialty] = useState("");
   const [hospital, setHospital] = useState("");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch doctors from API
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
-        const params = new URLSearchParams();
-        if (searchTerm) params.append("search", searchTerm);
-        if (specialty) params.append("specialization", specialty);
-        if (hospital) params.append("hospitalType", hospital);
+  const handleSearch = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchTerm) params.append("search", searchTerm);
+      if (specialty) params.append("specialization", specialty);
+      if (hospital) params.append("hospitalType", hospital);
 
-        const response = await fetch(`/api/doctors?${params.toString()}`);
-        const data = await response.json();
+      const response = await fetch(`/api/doctors?${params.toString()}`);
+      const data = await response.json();
 
-        setDoctors(data.doctors || []);
-      } catch (error) {
-        console.error("Error fetching doctors:", error);
-        setDoctors([]);
-      }
-    };
-
-    fetchDoctors();
-  }, [searchTerm, specialty, hospital]);
-
-  const handleSearch = () => {
-    setFilteredDoctors(doctors);
-    setShowResults(true);
+      setDoctors(data.doctors || []);
+      setShowResults(true);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      setDoctors([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className=" mx-auto p-6 text-black px-2 py-6 mb-2">
+    <div className="mx-auto p-6 text-black px-2 py-6 mb-2">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">
         Place an Appointment
       </h1>
@@ -83,6 +77,7 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
           placeholder="Enter Doctor name or Hospital"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -112,10 +107,11 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
 
         <button
           onClick={handleSearch}
-          className="w-full bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition flex items-center justify-center gap-2"
+          disabled={isLoading}
+          className="w-full bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Search size={20} />
-          Search Doctors
+          {isLoading ? "Searching..." : "Search Doctors"}
         </button>
       </div>
 
@@ -130,52 +126,60 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
               ← Back to Search
             </button>
             <span className="text-sm text-gray-500">
-              Found: {filteredDoctors.length} doctors
+              Found: {doctors.length} doctors
             </span>
           </div>
 
           <div className="space-y-4">
-            {filteredDoctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {doctor.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {doctor.specialty}
-                    </p>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={16} />
-                        <span>{doctor.city}</span>
+            {doctors.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+                <p className="text-gray-500">
+                  No doctors found matching your criteria.
+                </p>
+              </div>
+            ) : (
+              doctors.map((doctor) => (
+                <div
+                  key={doctor.id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {doctor.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {doctor.specialty}
+                      </p>
+                      <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <MapPin size={16} />
+                          <span>{doctor.city}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>{doctor.hospital}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <span>{doctor.hospital}</span>
-                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Experience: 10 years
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Experience: 10 years
-                    </p>
-                  </div>
 
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-700">
-                      Rs. {doctor.consultation_fee}
-                    </p>
-                    <button
-                      onClick={() => onNext(doctor)}
-                      className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"
-                    >
-                      Select Doctor
-                    </button>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-blue-700">
+                        Rs. {doctor.consultation_fee}
+                      </p>
+                      <button
+                        onClick={() => onNext(doctor)}
+                        className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"
+                      >
+                        Select Doctor
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       )}

@@ -26,6 +26,7 @@ type AppointmentDetailsModalProps = {
     amount?: number;
     patientName: string;
     patientPhone?: string;
+    patientEmail?: string;
     patientNIC?: string;
     patientDOB?: string;
     patientGender?: string;
@@ -49,6 +50,99 @@ export default function AppointmentDetailsModal({
   const [cancellationSuccess, setCancellationSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showEmailSuccessPopup, setShowEmailSuccessPopup] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  // Replace your existing handleSendEmail function with this:
+
+const handleSendEmail = async () => {
+  // Check if email exists in appointment data
+  if (!appointment?.patientEmail || appointment.patientEmail === "N/A") {
+    setEmailError(
+      "No email address found for this patient. Please add an email address to the patient details."
+    );
+    setTimeout(() => setEmailError(null), 5000);
+    return;
+  }
+
+  setIsSendingEmail(true);
+  setEmailError(null);
+  setShowEmailSuccessPopup(false);
+
+  try {
+    // Get the total amount
+    const totalAmount = appointment.total || appointment.total_amount || appointment.amount || 0;
+    
+    // Calculate base price and refund deposit
+    // If basePrice and refundDeposit exist in appointment, use them
+    // Otherwise calculate: base price = total - refund deposit (if refund exists)
+    let basePrice = appointment.basePrice;
+    let refundDeposit = appointment.refundDeposit || 0;
+    
+    // If basePrice is not available, calculate it
+    if (!basePrice) {
+      // Check if there's a refund deposit
+      // Assuming refund deposit is around 250 if refund_eligible is true
+      if (appointment.refundEligible || appointment.refund_eligible) {
+        // You might need to adjust this logic based on your business rules
+        // For now, we'll calculate: basePrice = total - 250 (or use a percentage)
+        refundDeposit = 250; // or calculate based on percentage
+        basePrice = totalAmount - refundDeposit;
+      } else {
+        // No refund, so total is the base price
+        basePrice = totalAmount;
+        refundDeposit = 0;
+      }
+    }
+    
+    const response = await fetch("/api/appointments/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: appointment.patientEmail,
+        appointmentDetails: {
+          appointmentId: appointment.appointmentId,
+          doctor: appointment.doctor,
+          specialization: appointment.specialization,
+          hospital: appointment.hospital,
+          date: appointment.date,
+          time: appointment.time,
+          patientName: appointment.patientName,
+          patientPhone: appointment.patientPhone,
+          patientNIC: appointment.patientNIC,
+          basePrice: basePrice,
+          refundDeposit: refundDeposit,
+          total: totalAmount,
+          status: currentStatus,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send email");
+    }
+
+    setIsSendingEmail(false);
+    setShowEmailSuccessPopup(true);
+
+    // Auto-hide success popup after 3 seconds
+    setTimeout(() => {
+      setShowEmailSuccessPopup(false);
+    }, 3000);
+  } catch (err: any) {
+    setIsSendingEmail(false);
+    setEmailError(err.message);
+    console.error("Error sending email:", err);
+
+    // Auto-hide error message after 5 seconds
+    setTimeout(() => setEmailError(null), 5000);
+  }
+};
 
   // Local state to track current appointment status
   const [currentStatus, setCurrentStatus] = useState(appointment?.status || "");
@@ -240,6 +334,14 @@ export default function AppointmentDetailsModal({
 
           {/* Content */}
           <div className="p-6 space-y-6">
+            {/* Email Error Message */}
+            {emailError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{emailError}</p>
+              </div>
+            )}
+
             {/* Appointment Summary */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -254,7 +356,7 @@ export default function AppointmentDetailsModal({
                   </p>
                 </div>
 
-                {/* Status - Use currentStatus instead of appointment.status */}
+                {/* Status */}
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
@@ -392,6 +494,17 @@ export default function AppointmentDetailsModal({
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <label className="text-sm text-gray-600 mb-2 block">
+                    Email Address
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientEmail || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
                     NIC Number
                   </label>
                   <input
@@ -445,56 +558,63 @@ export default function AppointmentDetailsModal({
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons - Conditional layout based on refund deposit */}
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
-                <FileText className="w-5 h-5" />
-                Send SMS Receipt
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
-                <Mail className="w-5 h-5" />
-                Send Email Receipt
-              </button>
-              <button
-                onClick={downloadAsPdf}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
-              >
-                <Download className="w-5 h-5" />
-                Download PDF
-              </button>
-              <button
-                onClick={downloadAsImage}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
-              >
-                <Download className="w-5 h-5" />
-                Download Image
-              </button>
-              <button
-                className={`flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                  !hasRefundDeposit ? "col-span-2" : ""
-                }`}
-                onClick={() => setShowCancelModal(true)}
-                disabled={currentStatus === "cancelled"}
-              >
-                <X className="w-5 h-5" />
-                {currentStatus === "cancelled"
-                  ? "Appointment Cancelled"
-                  : "Cancel Appointment"}
-              </button>
-              {/* Only show Cancel & Refund button if there's a refund deposit */}
-              {hasRefundDeposit && (
+            <div>
+              {/* Action Buttons */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Actions
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition">
+                  <FileText className="w-5 h-5" />
+                  Send SMS Receipt
+                </button>
                 <button
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setShowRefundModal(true)}
+                  onClick={handleSendEmail}
+                  disabled={isSendingEmail}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Mail className="w-5 h-5" />
+                  {isSendingEmail ? "Sending..." : "Send Email Receipt"}
+                </button>
+                <button
+                  onClick={downloadAsPdf}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition"
+                >
+                  <Download className="w-5 h-5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={downloadAsImage}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Image
+                </button>
+                <button
+                  className={`flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                    !hasRefundDeposit ? "col-span-2" : ""
+                  }`}
+                  onClick={() => setShowCancelModal(true)}
                   disabled={currentStatus === "cancelled"}
                 >
-                  <AlertCircle className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                   {currentStatus === "cancelled"
-                    ? "Cancelled"
-                    : "Cancel & Refund"}
+                    ? "Appointment Cancelled"
+                    : "Cancel Appointment"}
                 </button>
-              )}
+                {hasRefundDeposit && (
+                  <button
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setShowRefundModal(true)}
+                    disabled={currentStatus === "cancelled"}
+                  >
+                    <AlertCircle className="w-5 h-5" />
+                    {currentStatus === "cancelled"
+                      ? "Cancelled"
+                      : "Cancel & Refund"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -560,6 +680,12 @@ export default function AppointmentDetailsModal({
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-semibold text-gray-900">
                       {appointment.patientPhone || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientEmail || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -752,7 +878,7 @@ export default function AppointmentDetailsModal({
         </>
       )}
 
-      {/* Success Message */}
+      {/* Appointment Cancellation Success Popup */}
       {cancellationSuccess && (
         <>
           <div className="fixed inset-0 bg-black/60 z-[60]" />
@@ -772,6 +898,34 @@ export default function AppointmentDetailsModal({
                     ? `Your appointment has been cancelled and a refund of Rs. ${appointment.refundDeposit} will be processed within 5-7 business days.`
                     : "Your appointment has been successfully cancelled."}
                 </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Email Success Popup */}
+      {showEmailSuccessPopup && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[70]" />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md animate-scale-in">
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                  <Mail className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Email Sent Successfully!
+                </h3>
+                <p className="text-gray-600 mb-1">Receipt has been sent to:</p>
+                <p className="text-blue-600 font-semibold">
+                  {appointment.patientEmail}
+                </p>
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    ✓ The patient will receive the appointment details via email
+                  </p>
+                </div>
               </div>
             </div>
           </div>

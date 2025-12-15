@@ -2,16 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
 import jwt from "jsonwebtoken";
 
+// Helper function to format appointment ID
+function formatAppointmentId(id: number): string {
+  return `APT${String(id).padStart(4, "0")}`;
+}
+
 export async function POST(request: NextRequest) {
   let client;
-  
+
   try {
     // Add timeout to connection attempt
     client = await Promise.race([
       pool.connect(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database connection timeout')), 5000)
-      )
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Database connection timeout")), 5000)
+      ),
     ]);
 
     const token = request.cookies.get("token")?.value;
@@ -213,37 +218,107 @@ export async function POST(request: NextRequest) {
       [appointment.id]
     );
 
+    const appointmentData = completeAppointment.rows[0];
+
+    // Format appointment ID for display
+    const formattedAppointmentId = formatAppointmentId(appointmentData.id);
+
+    // ✅ AUTO-SEND EMAIL IF EMAIL IS PROVIDED
+    if (patientEmail && patientEmail.trim() !== "") {
+      try {
+        console.log("📧 Sending confirmation email to:", patientEmail);
+
+        // Calculate base price and refund deposit
+        const basePrice = agreeRefund ? totalAmount - 250 : totalAmount;
+        const refundDeposit = agreeRefund ? 250 : 0;
+
+        const emailPayload = {
+          email: patientEmail,
+          appointmentDetails: {
+            appointmentId: formattedAppointmentId, // Use formatted ID
+            doctor: doctor.name,
+            specialization: doctor.specialty,
+            hospital: doctor.hospital,
+            date: new Date(appointmentDate).toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            time: appointmentTime,
+            patientName: patientName,
+            patientPhone: patientPhone || finalSltPhone,
+            patientNIC: patientNIC || null,
+            status: "confirmed",
+            basePrice: basePrice,
+            refundDeposit: refundDeposit,
+            total: totalAmount,
+          },
+        };
+
+        // Call email API
+        const emailResponse = await fetch(
+          `${
+            process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+          }/api/appointments/send-email`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(emailPayload),
+          }
+        );
+
+        if (emailResponse.ok) {
+          console.log("✅ Confirmation email sent successfully");
+        } else {
+          console.error("⚠️ Email sending failed, but appointment created");
+        }
+      } catch (emailError) {
+        // Log error but don't fail the appointment creation
+        console.error("⚠️ Email error (non-blocking):", emailError);
+      }
+    } else {
+      console.log("ℹ️ No email provided, skipping email notification");
+    }
+
     return NextResponse.json(
       {
         message: "Appointment booked successfully",
-        appointment: completeAppointment.rows[0],
+        appointment: {
+          ...appointmentData,
+          formattedId: formattedAppointmentId, // Include formatted ID in response
+        },
+        emailSent: !!patientEmail,
       },
       { status: 201 }
     );
   } catch (error: any) {
     console.error("Error creating appointment:", error);
-    
+
     // Specific error handling
-    if (error.message === 'Database connection timeout') {
+    if (error.message === "Database connection timeout") {
       return NextResponse.json(
-        { 
-          error: "Database connection failed", 
-          message: "Unable to connect to database. Please try again later." 
+        {
+          error: "Database connection failed",
+          message: "Unable to connect to database. Please try again later.",
         },
         { status: 503 }
       );
     }
-    
-    if (error.code === 'ETIMEDOUT') {
+
+    if (error.code === "ETIMEDOUT") {
       return NextResponse.json(
-        { 
-          error: "Database timeout", 
-          message: "Database connection timed out. Please check your database configuration." 
+        {
+          error: "Database timeout",
+          message:
+            "Database connection timed out. Please check your database configuration.",
         },
         { status: 503 }
       );
     }
-    
+
     // Try to rollback if client exists
     if (client) {
       try {
@@ -252,7 +327,7 @@ export async function POST(request: NextRequest) {
         console.error("Rollback failed:", rollbackError);
       }
     }
-    
+
     return NextResponse.json(
       { error: "Failed to create appointment", message: error.message },
       { status: 500 }

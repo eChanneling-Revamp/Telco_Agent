@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
        LEFT JOIN doctor_availability da ON a.availability_id = da.id
        LEFT JOIN payments p ON a.id = p.appointment_id
        ${whereSql}
-      ORDER BY a.created_at DESC`,
+      ORDER BY a.updated_at DESC`,
       params
     );
 

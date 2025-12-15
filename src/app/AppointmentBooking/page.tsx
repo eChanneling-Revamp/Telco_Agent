@@ -118,6 +118,8 @@ export default function AppointmentBookingPage() {
               doctor={selectedDoctor}
               onNext={handleDateTimeSelect}
               onBack={() => setStep(1)}
+              initialDate={selectedDate} // ← Add this line
+              initialTime={selectedTime} // ← Add this line
             />
           )}
 
@@ -128,6 +130,7 @@ export default function AppointmentBookingPage() {
               time={selectedTime}
               onNext={handlePatientSubmit}
               onBack={() => setStep(2)}
+              initialData={patientData} // ← Add this line
             />
           )}
 

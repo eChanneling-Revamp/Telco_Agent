@@ -15,16 +15,18 @@ interface PriceAndPatientProps {
   time: string;
   onNext: (patientData: any) => void;
   onBack: () => void;
+  initialData?: any;
 }
 
-export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: PriceAndPatientProps) {
-  const [patientName, setPatientName] = useState("");
-  const [patientNIC, setPatientNIC] = useState("");
-  const [patientMobile, setPatientMobile] = useState("");
-  const [patientDOB, setPatientDOB] = useState("");
-  const [patientGender, setPatientGender] = useState("");
-  const [patientAge, setPatientAge] = useState("");
-  const [agreeRefund, setAgreeRefund] = useState(false);
+export default function PriceAndPatient({ doctor, date, time, onNext, onBack, initialData }: PriceAndPatientProps) {
+  const [patientName, setPatientName] = useState(initialData?.name || "");
+  const [patientNIC, setPatientNIC] = useState(initialData?.nic || "");
+  const [patientMobile, setPatientMobile] = useState(initialData?.mobile || "");
+  const [patientEmail, setPatientEmail] = useState(initialData?.email || "");
+  const [patientDOB, setPatientDOB] = useState(initialData?.dob || "");
+  const [patientGender, setPatientGender] = useState(initialData?.gender || "");
+  const [patientAge, setPatientAge] = useState(initialData?.age || "");
+  const [agreeRefund, setAgreeRefund] = useState(initialData?.agreeRefund || false);
 
   const basePrice = Number(doctor.consultation_fee);
   const refund = 250;
@@ -35,6 +37,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
       name: patientName,
       nic: patientNIC,
       mobile: patientMobile,
+      email: patientEmail,
       dob: patientDOB,
       gender: patientGender,
       age: patientAge,
@@ -44,11 +47,11 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
   };
 
   return (
-    <div className=" mx-auto p-6 px-2 py-6 mb-2">
+    <div className="mx-auto p-6 px-2 py-6 mb-2">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
       
       {/* Progress Bar */}
-      <div  className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-2 mb-8">
         <div className="flex-1 h-2 bg-blue-900 rounded"></div>
         <div className="flex-1 h-2 bg-blue-900 rounded"></div>
         <div className="flex-1 h-2 bg-blue-900 rounded"></div>
@@ -116,7 +119,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-black">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={patientName}
@@ -127,7 +132,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Patient NIC</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient NIC <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={patientNIC}
@@ -138,7 +145,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Patient Mobile Number</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Mobile Number <span className="text-red-500">*</span>
+            </label>
             <input
               type="tel"
               value={patientMobile}
@@ -149,7 +158,22 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Email <span className="text-gray-400 text-xs">(Optional)</span>
+            </label>
+            <input
+              type="email"
+              value={patientEmail}
+              onChange={(e) => setPatientEmail(e.target.value)}
+              placeholder="example@email.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               value={patientDOB}
@@ -159,7 +183,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender <span className="text-red-500">*</span>
+            </label>
             <select
               value={patientGender}
               onChange={(e) => setPatientGender(e.target.value)}
@@ -173,7 +199,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack }: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Age <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               value={patientAge}

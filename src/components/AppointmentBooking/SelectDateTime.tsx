@@ -21,15 +21,19 @@ interface SelectDateTimeProps {
   doctor: Doctor;
   onNext: (date: string, time: string) => void;
   onBack: () => void;
+  initialDate?: string;
+  initialTime?: string;
 }
 
 export default function SelectDateTime({
   doctor,
   onNext,
   onBack,
+  initialDate,
+  initialTime,
 }: SelectDateTimeProps) {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDate, setSelectedDate] = useState(initialDate || "");
+  const [selectedTime, setSelectedTime] = useState(initialTime || "");
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 

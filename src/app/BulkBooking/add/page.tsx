@@ -35,7 +35,7 @@ export default function AddBulkBookingPage() {
           // ❗ FIX FIELD NAMES
           name: item.patientName,
           mobile: item.patientMobile,
-          email: null,
+          email: item.patientEmail || null,
 
           nic: item.patientNIC,
           dob: item.patientDOB,
@@ -54,6 +54,7 @@ export default function AddBulkBookingPage() {
           isMember: false,
           sendSms: true,
           sendEmail: false,
+          sendEmail: Boolean(item.patientEmail),
           agreeRefund: item.refundDeposit,
         };
 
@@ -203,6 +204,7 @@ export default function AddBulkBookingPage() {
                                 <p className="text-xs text-gray-500">
                                   {item.selectedDoctor.hospital}
                                 </p>
+
                                 <p className="text-xs text-gray-500">
                                   DOB: {item.patientDOB}
                                 </p>
@@ -211,6 +213,9 @@ export default function AddBulkBookingPage() {
                                 </p>
                                 <p className="text-xs text-gray-500 mb-1">
                                   Age: {item.patientAge}
+                                </p>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Email: {item.patientEmail}
                                 </p>
 
                                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">

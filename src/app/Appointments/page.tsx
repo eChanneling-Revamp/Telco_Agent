@@ -41,6 +41,7 @@ export default function Page() {
         amount: appointment.amount || appointment.total || 0,
         patientName: appointment.patientName,
         patientPhone: appointment.patientPhone,
+        patientEmail: appointment.patientEmail,
         patientNIC: appointment.patientNIC,
         patientDOB: appointment.patientDOB,
         patientGender: appointment.patientGender,
@@ -91,6 +92,7 @@ export default function Page() {
             patientPhone: a.patient_phone || a.slt_phone,
             patientNIC: a.patient_nic,
             patientDOB: a.patient_dob,
+            patientEmail: a.patient_email,
             patientGender: a.patient_gender,
             patientAge: a.patient_age,
             doctor: a.doctor_name || a.doctor_full_name,
@@ -196,6 +198,12 @@ export default function Page() {
       <AppointmentDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onAppointmentCancelled={() => {
+          // Refresh appointments after cancellation
+          setIsModalOpen(false);
+          // Trigger re-fetch
+          setSelectedDate(selectedDate); // This will trigger useEffect
+        }}
         appointment={selectedAppointment}
       />
     </div>

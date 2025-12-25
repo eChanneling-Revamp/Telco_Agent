@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Modal } from '@/components/ManageAgents/Modal';
-import { Appointment } from '@/types/appointment';
-import { Badge } from '@/components/ManageAgents/Badge';
+import React from "react";
+import { Modal } from "@/components/ManageAgents/Modal";
+import { Appointment } from "@/types/appointment";
+import { Badge } from "@/components/ManageAgents/Badge";
 
 interface AppointmentDetailsModalProps {
   isOpen: boolean;
@@ -11,74 +11,119 @@ interface AppointmentDetailsModalProps {
   appointment: Appointment | null;
 }
 
-export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  appointment 
-}) => {
+export const AppointmentDetailsModal: React.FC<
+  AppointmentDetailsModalProps
+> = ({ isOpen, onClose, appointment }) => {
   if (!appointment) return null;
 
+  // Map appointment status to badge variant
+  const getStatusVariant = (
+    status: string
+  ): "primary" | "success" | "danger" | "warning" => {
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case "confirmed":
+        return "success";
+      case "pending":
+        return "warning";
+      case "cancelled":
+        return "danger";
+      default:
+        return "primary";
+    }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Appointment Details" size="md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Appointment Details"
+      size="md"
+    >
       <div className="space-y-6">
         {/* Appointment Summary */}
         <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Appointment Summary</h3>
-          
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Appointment Summary
+          </h3>
+
           <div className="grid grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-500 mb-2">Appointment ID</p>
-              <p className="text-base font-semibold text-gray-900">{appointment.appointmentId}</p>
+              <p className="text-base font-semibold text-gray-900">
+                {appointment.appointmentId}
+              </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Status</p>
-              <Badge variant="success">{appointment.status}</Badge>
+              <Badge variant={getStatusVariant(appointment.status)}>
+                {appointment.status.charAt(0).toUpperCase() +
+                  appointment.status.slice(1)}
+              </Badge>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Doctor</p>
-              <p className="text-base font-semibold text-gray-900">{appointment.doctor}</p>
-              <p className="text-sm text-gray-600">{appointment.doctorSpecialty}</p>
+              <p className="text-base font-semibold text-gray-900">
+                {appointment.doctor}
+              </p>
+              <p className="text-sm text-gray-600">
+                {appointment.doctorSpecialty}
+              </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Hospital</p>
-              <p className="text-base font-semibold text-gray-900">{appointment.hospital}</p>
+              <p className="text-base font-semibold text-gray-900">
+                {appointment.hospital}
+              </p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Date & Time</p>
-              <p className="text-base font-semibold text-gray-900">{appointment.dateTime}</p>
+              <p className="text-base font-semibold text-gray-900">
+                {appointment.dateTime}
+              </p>
               <p className="text-sm text-gray-600">{appointment.time}</p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 mb-2">Total Amount</p>
-              <p className="text-base font-semibold text-green-600">Rs. {appointment.amount}</p>
+              <p className="text-base font-semibold text-green-600">
+                Rs. {appointment.amount}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Pricing Breakdown */}
         <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Pricing Breakdown</h3>
-          
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Pricing Breakdown
+          </h3>
+
           <div className="bg-blue-50 rounded-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-700">Base Price:</span>
-              <span className="font-semibold text-gray-900">Rs. {appointment.basePrice}</span>
+              <span className="font-semibold text-gray-900">
+                Rs. {appointment.basePrice}
+              </span>
             </div>
 
             <div className="flex items-center justify-between">
               <span className="text-gray-700">Refund Deposit:</span>
-              <span className="font-semibold text-cyan-600">Rs. {appointment.refundDeposit}</span>
+              <span className="font-semibold text-cyan-600">
+                Rs. {appointment.refundDeposit}
+              </span>
             </div>
 
             <div className="border-t border-blue-200 pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-gray-900">Total:</span>
-                <span className="text-lg font-bold text-cyan-600">Rs. {appointment.amount}</span>
+                <span className="text-lg font-bold text-cyan-600">
+                  Rs. {appointment.amount}
+                </span>
               </div>
             </div>
           </div>
@@ -88,14 +133,29 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div>
-              <h4 className="font-semibold text-green-900 mb-1">Refund Eligibility</h4>
+              <h4 className="font-semibold text-green-900 mb-1">
+                Refund Eligibility
+              </h4>
               <p className="text-sm text-green-700">
-                Rs. {appointment.refundDeposit} deposit paid – {appointment.refundable ? 'Full refund eligible if cancelled' : 'Non-refundable'}
+                Rs. {appointment.refundDeposit} deposit paid –{" "}
+                {appointment.refundable
+                  ? "Full refund eligible if cancelled"
+                  : "Non-refundable"}
               </p>
             </div>
           </div>
@@ -103,20 +163,30 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
 
         {/* Patient Information */}
         <div>
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Patient Information</h3>
-          
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Patient Information
+          </h3>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-500 mb-2">Patient Name</label>
+              <label className="block text-sm text-gray-500 mb-2">
+                Patient Name
+              </label>
               <div className="px-4 py-3 bg-white border border-gray-200 rounded-lg">
-                <p className="text-gray-900 font-medium">{appointment.patientName}</p>
+                <p className="text-gray-900 font-medium">
+                  {appointment.patientName}
+                </p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm text-gray-500 mb-2">Mobile Number</label>
+              <label className="block text-sm text-gray-500 mb-2">
+                Mobile Number
+              </label>
               <div className="px-4 py-3 bg-white border border-gray-200 rounded-lg">
-                <p className="text-gray-900 font-medium">{appointment.phone || 'N/A'}</p>
+                <p className="text-gray-900 font-medium">
+                  {appointment.phone || "N/A"}
+                </p>
               </div>
             </div>
           </div>
@@ -130,9 +200,7 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
           >
             Close
           </button>
-          <button
-            className="flex-1 px-6 py-3 bg-blue-800 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
+          <button className="flex-1 px-6 py-3 bg-blue-800 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
             Edit Appointment
           </button>
         </div>
@@ -140,7 +208,3 @@ export const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = (
     </Modal>
   );
 };
-
-
-
-

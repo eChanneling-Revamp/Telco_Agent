@@ -17,6 +17,10 @@ const AddNewAgentPage = (props: Props) => {
     temporaryPassword: "",
     accessLevel: "Full Access",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [createdAgentName, setCreatedAgentName] = useState<string>("");
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -28,10 +32,59 @@ const AddNewAgentPage = (props: Props) => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form data:", formData);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/newauth/admin/create-agent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.temporaryPassword,
+          name: formData.fullName,
+          phone: formData.phoneNumber || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create agent");
+      }
+
+      // Success - store agent name and show popup
+      setCreatedAgentName(formData.fullName);
+
+      // Reset form
+      setFormData({
+        fullName: "",
+        username: "",
+        email: "",
+        phoneNumber: "",
+        temporaryPassword: "",
+        accessLevel: "Full Access",
+      });
+
+      // Show success popup
+      setShowSuccessPopup(true);
+
+      // Redirect after showing success popup
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        router.push("/admin/users");
+      }, 2000);
+    } catch (err: any) {
+      console.error("Error creating agent:", err);
+      setError(err.message || "Failed to create agent. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -69,6 +122,33 @@ const AddNewAgentPage = (props: Props) => {
             </h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-semibold text-red-900">
+                        Error
+                      </h4>
+                      <p className="text-sm text-red-700 mt-1">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Full Name */}
               <div>
                 <label
@@ -208,14 +288,79 @@ const AddNewAgentPage = (props: Props) => {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors mt-8 cursor-pointer"
+                disabled={isLoading}
+                className="w-full bg-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Create Agent
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Creating Agent...
+                  </>
+                ) : (
+                  "Create Agent"
+                )}
               </button>
             </form>
           </div>
         </main>
       </div>
+
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[70]" />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md animate-scale-in">
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                  <svg
+                    className="w-8 h-8 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Agent Created Successfully!
+                </h3>
+                <p className="text-gray-600 mb-1">
+                  {createdAgentName || "The agent"} has been created
+                  successfully.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Redirecting to agents list...
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

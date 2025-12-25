@@ -1,52 +1,84 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
+
+type AgentOption = {
+  id: string;
+  name: string;
+};
+
+type SelectedFilters = {
+  agent: string;
+  status: string;
+  hospital: string;
+  date: string;
+};
 
 interface AppointmentsFiltersProps {
-  onFilterChange: (filters: any) => void;
+  agents: AgentOption[];
+  hospitals: string[];
+  statuses: string[];
+  selectedFilters: SelectedFilters;
+  onFilterChange: (filters: Partial<SelectedFilters>) => void;
 }
 
-export const AppointmentsFilters: React.FC<AppointmentsFiltersProps> = ({ onFilterChange }) => {
-  const handleChange = (field: string, value: string) => {
+export const AppointmentsFilters: React.FC<AppointmentsFiltersProps> = ({
+  agents,
+  hospitals,
+  statuses,
+  selectedFilters,
+  onFilterChange,
+}) => {
+  const handleChange = (field: keyof SelectedFilters, value: string) => {
     onFilterChange({ [field]: value });
   };
 
   return (
     <div className="grid grid-cols-4 gap-4 mb-6">
       <select
-        onChange={(e) => handleChange('agent', e.target.value)}
+        value={selectedFilters.agent}
+        onChange={(e) => handleChange("agent", e.target.value)}
         className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
       >
         <option value="all">All Agents</option>
-        <option value="john.smith">Agent John Smith</option>
-        <option value="mary.j">Agent Mary Johnson</option>
+        {agents.map((agent) => (
+          <option key={agent.id} value={agent.id}>
+            {agent.name}
+          </option>
+        ))}
       </select>
 
-      <select
-        onChange={(e) => handleChange('date', e.target.value)}
+      <input
+        type="date"
+        value={selectedFilters.date}
+        onChange={(e) => handleChange("date", e.target.value)}
         className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
-      >
-        <option value="all">All Dates</option>
-        <option value="2024-01-15">2024-01-15</option>
-        <option value="2024-01-16">2024-01-16</option>
-      </select>
+      />
 
       <select
-        onChange={(e) => handleChange('hospital', e.target.value)}
+        value={selectedFilters.hospital}
+        onChange={(e) => handleChange("hospital", e.target.value)}
         className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
       >
         <option value="all">All Hospitals</option>
-        <option value="City Hospital">City Hospital</option>
-        <option value="Metro Medical Center">Metro Medical Center</option>
+        {hospitals.map((hospital) => (
+          <option key={hospital} value={hospital}>
+            {hospital}
+          </option>
+        ))}
       </select>
 
       <select
-        onChange={(e) => handleChange('refundStatus', e.target.value)}
+        value={selectedFilters.status}
+        onChange={(e) => handleChange("status", e.target.value)}
         className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
       >
-        <option value="all">All Refund Status</option>
-        <option value="Full refund eligible">Full refund eligible</option>
-        <option value="Non-refundable">Non-refundable</option>
+        <option value="all">All Status</option>
+        {statuses.map((status) => (
+          <option key={status} value={status}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </option>
+        ))}
       </select>
     </div>
   );

@@ -57,11 +57,17 @@ export default function SelectDateTime({
 
         if (data.doctors && data.doctors.length > 0) {
           const availability = data.doctors[0];
-          // Parse start_time and end_time to create time slots
-          const startTime = availability.start_time; // HH:MM:SS format
-          const endTime = availability.end_time;
-          const slots = generateTimeSlots(startTime, endTime);
-          setTimeSlots(slots);
+          // Validate that start_time and end_time exist
+          if (availability.start_time && availability.end_time) {
+            const slots = generateTimeSlots(
+              availability.start_time,
+              availability.end_time
+            );
+            setTimeSlots(slots);
+          } else {
+            console.warn("Missing start_time or end_time in availability data");
+            setTimeSlots(getDefaultTimeSlots());
+          }
         } else {
           // Fallback to default slots if no availability found
           setTimeSlots(getDefaultTimeSlots());
@@ -82,35 +88,67 @@ export default function SelectDateTime({
     startTime: string,
     endTime: string
   ): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const [startHour, startMin] = startTime.split(":").map(Number);
-    const [endHour, endMin] = endTime.split(":").map(Number);
-
-    let currentHour = startHour;
-    let currentMin = startMin;
-
-    while (
-      currentHour < endHour ||
-      (currentHour === endHour && currentMin < endMin)
-    ) {
-      const timeStr = `${String(currentHour).padStart(2, "0")}:${String(
-        currentMin
-      ).padStart(2, "0")}`;
-      const ampm = currentHour >= 12 ? "PM" : "AM";
-      const displayHour = currentHour % 12 || 12;
-      slots.push({
-        time: `${displayHour}:${String(currentMin).padStart(2, "0")} ${ampm}`,
-        available: true, // Assume all fetched slots are available
-      });
-
-      currentMin += 30;
-      if (currentMin >= 60) {
-        currentMin = 0;
-        currentHour += 1;
-      }
+    // Validate inputs
+    if (!startTime || !endTime) {
+      console.error("Invalid time parameters:", { startTime, endTime });
+      return [];
     }
 
-    return slots;
+    const slots: TimeSlot[] = [];
+
+    try {
+      const startParts = startTime.split(":");
+      const endParts = endTime.split(":");
+
+      // Validate time format
+      if (startParts.length < 2 || endParts.length < 2) {
+        console.error("Invalid time format:", { startTime, endTime });
+        return [];
+      }
+
+      const [startHour, startMin] = startParts.map(Number);
+      const [endHour, endMin] = endParts.map(Number);
+
+      // Validate that we got valid numbers
+      if (
+        isNaN(startHour) ||
+        isNaN(startMin) ||
+        isNaN(endHour) ||
+        isNaN(endMin)
+      ) {
+        console.error("Invalid time values:", { startTime, endTime });
+        return [];
+      }
+
+      let currentHour = startHour;
+      let currentMin = startMin;
+
+      while (
+        currentHour < endHour ||
+        (currentHour === endHour && currentMin < endMin)
+      ) {
+        const timeStr = `${String(currentHour).padStart(2, "0")}:${String(
+          currentMin
+        ).padStart(2, "0")}`;
+        const ampm = currentHour >= 12 ? "PM" : "AM";
+        const displayHour = currentHour % 12 || 12;
+        slots.push({
+          time: `${displayHour}:${String(currentMin).padStart(2, "0")} ${ampm}`,
+          available: true,
+        });
+
+        currentMin += 30;
+        if (currentMin >= 60) {
+          currentMin = 0;
+          currentHour += 1;
+        }
+      }
+
+      return slots;
+    } catch (error) {
+      console.error("Error generating time slots:", error);
+      return [];
+    }
   };
 
   // Default fallback time slots

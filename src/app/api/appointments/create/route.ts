@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
 // Helper function to format appointment ID
@@ -8,17 +8,7 @@ function formatAppointmentId(id: number): string {
 }
 
 export async function POST(request: NextRequest) {
-  let client;
-
   try {
-    // Add timeout to connection attempt
-    client = await Promise.race([
-      pool.connect(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Database connection timeout")), 5000)
-      ),
-    ]);
-
     const token = request.cookies.get("token")?.value;
     let userId = null;
 
@@ -82,34 +72,44 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await client.query("BEGIN");
+    // Fetch doctor details using Prisma
+    const doctor = await prisma.doctors.findUnique({
+      where: { id: doctorId },
+      select: {
+        id: true,
+        name: true,
+        specialty: true,
+        hospital: true,
+      },
+    });
 
-    // Fetch doctor details
-    const doctorResult = await client.query(
-      `SELECT id, name, specialty, hospital FROM doctors WHERE id = $1`,
-      [doctorId]
-    );
-
-    if (doctorResult.rows.length === 0) {
-      await client.query("ROLLBACK");
+    if (!doctor) {
       return NextResponse.json({ error: "Doctor not found" }, { status: 400 });
     }
 
-    const doctor = doctorResult.rows[0];
-
-    // Check if slot is available
+    // Check availability if provided
     if (availabilityId) {
-      const availabilityCheck = await client.query(
-        `SELECT * FROM doctor_availability 
-         WHERE id = $1 AND is_active = true 
-         AND booked_appointments < max_appointments`,
-        [availabilityId]
-      );
+      const availability = await prisma.doctor_availability.findFirst({
+        where: {
+          id: availabilityId,
+          is_active: true,
+        },
+      });
 
-      if (availabilityCheck.rows.length === 0) {
-        await client.query("ROLLBACK");
+      if (!availability) {
         return NextResponse.json(
           { error: "This time slot is no longer available" },
+          { status: 400 }
+        );
+      }
+
+      // Check if slots are available
+      const bookedAppointments = availability.booked_appointments || 0;
+      const maxAppointments = availability.max_appointments || 10;
+
+      if (bookedAppointments >= maxAppointments) {
+        return NextResponse.json(
+          { error: "This time slot is fully booked" },
           { status: 400 }
         );
       }
@@ -145,97 +145,92 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create appointment
-    const appointmentResult = await client.query(
-      `INSERT INTO appointments (
-        user_id, doctor_id, availability_id, patient_name, patient_phone,
-        patient_email, patient_nic, patient_dob, patient_gender, patient_age,
-        slt_phone, notes, appointment_date, appointment_time,
-        payment_method, total_amount, is_member, send_sms, send_email, status,
-        doctor_name, specialty, hospital, refund_eligible
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
-      RETURNING *`,
-      [
-        userId,
-        doctorId,
-        availabilityId || null,
-        patientName,
-        patientPhone || finalSltPhone,
-        patientEmail || null,
-        patientNIC || null,
-        patientDOB || null,
-        patientGender || null,
-        patientAge ? parseInt(patientAge) : null,
-        finalSltPhone,
-        notes || null,
-        appointmentDate,
-        appointmentTimeValue,
-        paymentMethod || "bill",
-        totalAmount,
-        isMember || false,
-        sendSms !== undefined ? sendSms : true,
-        sendEmail !== undefined ? sendEmail : false,
-        "confirmed",
-        doctor.name,
-        doctor.specialty,
-        doctor.hospital,
-        agreeRefund || false,
-      ]
-    );
+    // Use Prisma transaction for atomic operations
+    const result = await prisma.$transaction(async (tx) => {
+      // Create appointment
+      const appointment = await tx.appointments.create({
+        data: {
+          user_id: userId,
+          doctor_id: doctorId,
+          availability_id: availabilityId || null,
+          patient_name: patientName,
+          patient_phone: patientPhone || finalSltPhone,
+          patient_email: patientEmail || null,
+          patient_nic: patientNIC || null,
+          patient_dob: patientDOB ? new Date(patientDOB) : null,
+          patient_gender: patientGender || null,
+          patient_age: patientAge ? parseInt(patientAge) : null,
+          slt_phone: finalSltPhone,
+          notes: notes || null,
+          appointment_date: new Date(appointmentDate),
+          appointment_time: new Date(`1970-01-01T${appointmentTimeValue}`),
+          payment_method: paymentMethod || "bill",
+          total_amount: totalAmount,
+          is_member: isMember || false,
+          send_sms: sendSms !== undefined ? sendSms : true,
+          send_email: sendEmail !== undefined ? sendEmail : false,
+          status: "confirmed",
+          doctor_name: doctor.name,
+          specialty: doctor.specialty,
+          hospital: doctor.hospital,
+          refund_eligible: agreeRefund || false,
+        },
+      });
 
-    const appointment = appointmentResult.rows[0];
+      // Update availability count if provided
+      if (availabilityId) {
+        await tx.doctor_availability.update({
+          where: { id: availabilityId },
+          data: {
+            booked_appointments: {
+              increment: 1,
+            },
+          },
+        });
+      }
 
-    // Update availability count
-    if (availabilityId) {
-      await client.query(
-        `UPDATE doctor_availability 
-         SET booked_appointments = booked_appointments + 1 
-         WHERE id = $1`,
-        [availabilityId]
-      );
-    }
+      // Create payment record
+      const paymentStatus = paymentMethod === "card" ? "pending" : "paid";
+      await tx.payments.create({
+        data: {
+          appointment_id: appointment.id,
+          payment_method: paymentMethod,
+          amount: totalAmount,
+          payment_status: paymentStatus,
+        },
+      });
 
-    // Create payment record
-    const paymentStatus = paymentMethod === "card" ? "pending" : "paid";
-    await client.query(
-      `INSERT INTO payments (appointment_id, payment_method, amount, payment_status)
-       VALUES ($1, $2, $3, $4)`,
-      [appointment.id, paymentMethod, totalAmount, paymentStatus]
-    );
+      return appointment;
+    });
 
-    await client.query("COMMIT");
+    // Get complete appointment details with relations
+    const completeAppointment = await prisma.appointments.findUnique({
+      where: { id: result.id },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-    // Get complete appointment details
-    const completeAppointment = await pool.query(
-      `SELECT 
-        a.*,
-        d.name as doctor_name,
-        d.specialty,
-        d.hospital
-       FROM appointments a
-       JOIN doctors d ON a.doctor_id = d.id
-       WHERE a.id = $1`,
-      [appointment.id]
-    );
+    const formattedAppointmentId = formatAppointmentId(result.id);
 
-    const appointmentData = completeAppointment.rows[0];
-
-    // Format appointment ID for display
-    const formattedAppointmentId = formatAppointmentId(appointmentData.id);
-
-    // ✅ AUTO-SEND EMAIL IF EMAIL IS PROVIDED
+    // Send email if provided
     if (patientEmail && patientEmail.trim() !== "") {
       try {
         console.log("📧 Sending confirmation email to:", patientEmail);
 
-        // Calculate base price and refund deposit
         const basePrice = agreeRefund ? totalAmount - 250 : totalAmount;
         const refundDeposit = agreeRefund ? 250 : 0;
 
         const emailPayload = {
           email: patientEmail,
           appointmentDetails: {
-            appointmentId: formattedAppointmentId, // Use formatted ID
+            appointmentId: formattedAppointmentId,
             doctor: doctor.name,
             specialization: doctor.specialty,
             hospital: doctor.hospital,
@@ -256,7 +251,6 @@ export async function POST(request: NextRequest) {
           },
         };
 
-        // Call email API
         const emailResponse = await fetch(
           `${
             process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
@@ -276,19 +270,16 @@ export async function POST(request: NextRequest) {
           console.error("⚠️ Email sending failed, but appointment created");
         }
       } catch (emailError) {
-        // Log error but don't fail the appointment creation
         console.error("⚠️ Email error (non-blocking):", emailError);
       }
-    } else {
-      console.log("ℹ️ No email provided, skipping email notification");
     }
 
     return NextResponse.json(
       {
         message: "Appointment booked successfully",
         appointment: {
-          ...appointmentData,
-          formattedId: formattedAppointmentId, // Include formatted ID in response
+          ...completeAppointment,
+          formattedId: formattedAppointmentId,
         },
         emailSent: !!patientEmail,
       },
@@ -297,44 +288,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error creating appointment:", error);
 
-    // Specific error handling
-    if (error.message === "Database connection timeout") {
-      return NextResponse.json(
-        {
-          error: "Database connection failed",
-          message: "Unable to connect to database. Please try again later.",
-        },
-        { status: 503 }
-      );
-    }
-
-    if (error.code === "ETIMEDOUT") {
-      return NextResponse.json(
-        {
-          error: "Database timeout",
-          message:
-            "Database connection timed out. Please check your database configuration.",
-        },
-        { status: 503 }
-      );
-    }
-
-    // Try to rollback if client exists
-    if (client) {
-      try {
-        await client.query("ROLLBACK");
-      } catch (rollbackError) {
-        console.error("Rollback failed:", rollbackError);
-      }
-    }
-
     return NextResponse.json(
       { error: "Failed to create appointment", message: error.message },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

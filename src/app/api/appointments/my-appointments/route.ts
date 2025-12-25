@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import pool from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
 export async function GET(request: NextRequest) {
@@ -14,128 +14,100 @@ export async function GET(request: NextRequest) {
       userId: number;
     };
 
-    // support filtering via query params
+    // Get query parameters
     const url = new URL(request.url);
     const search = url.searchParams.get("search") || "";
     const status = url.searchParams.get("status") || "";
     const date = url.searchParams.get("date") || "";
 
-    // Build WHERE clauses dynamically
-    const whereClauses = ["a.user_id = $1"];
-    const params: any[] = [decoded.userId];
-    let idx = 2;
+    // Build where clause dynamically
+    const whereClause: any = {
+      user_id: decoded.userId,
+    };
 
     if (status) {
-      whereClauses.push(`a.status = $${idx}`);
-      params.push(status);
-      idx++;
+      whereClause.status = status;
     }
 
     if (date) {
-      whereClauses.push(`a.appointment_date = $${idx}`);
-      params.push(date);
-      idx++;
+      whereClause.appointment_date = new Date(date);
     }
 
     if (search) {
-      whereClauses.push(
-        `(a.patient_name ILIKE $${idx} OR d.name ILIKE $${idx})`
-      );
-      params.push(`%${search}%`);
-      idx++;
+      whereClause.OR = [
+        {
+          patient_name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          doctor_name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      ];
     }
 
-    const whereSql = whereClauses.length
-      ? "WHERE " + whereClauses.join(" AND ")
-      : "";
+    // Get total count
+    const total = await prisma.appointments.count({
+      where: whereClause,
+    });
 
-    // total count
-    const countResult = await pool.query(
-      `SELECT COUNT(*) AS total FROM appointments a JOIN doctors d ON a.doctor_id = d.id ${whereSql}`,
-      params
-    );
-    const total = parseInt(countResult.rows[0].total, 10) || 0;
+    // Fetch appointments with relations
+    const appointmentsData = await prisma.appointments.findMany({
+      where: whereClause,
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        payments: {
+          select: {
+            payment_status: true,
+            transaction_id: true,
+          },
+        },
+      },
+      orderBy: {
+        updated_at: "desc",
+      },
+    });
 
-    // Fetch all appointments without limit/offset
-    const result = await pool.query(
-      `SELECT 
-        a.id,
-        a.user_id,
-        a.doctor_id,
-        a.patient_name,
-        a.patient_phone,
-        a.patient_email,
-        a.patient_nic,
-        TO_CHAR(a.patient_dob, 'YYYY-MM-DD') as patient_dob,
-        a.patient_gender,
-        a.patient_age,
-        a.slt_phone,
-        TO_CHAR(a.appointment_date, 'YYYY-MM-DD') as appointment_date,
-        a.appointment_time,
-        a.status,
-        a.payment_method,
-        a.total_amount,
-        a.is_member,
-        a.send_sms,
-        a.send_email,
-        a.notes,
-        a.doctor_name,
-        a.specialty,
-        a.hospital,
-        a.refund_eligible,
-        a.created_at,
-        a.updated_at,
-        d.name as doctor_full_name,
-        d.city,
-        d.consultation_fee,
-        da.start_time,
-        da.end_time,
-        p.payment_status,
-        p.transaction_id
-       FROM appointments a
-       JOIN doctors d ON a.doctor_id = d.id
-       LEFT JOIN doctor_availability da ON a.availability_id = da.id
-       LEFT JOIN payments p ON a.id = p.appointment_id
-       ${whereSql}
-      ORDER BY a.updated_at DESC`,
-      params
-    );
-
-    const appointments = result.rows.map((row) => ({
-      id: row.id,
-      user_id: row.user_id,
-      doctor_id: row.doctor_id,
-      patient_name: row.patient_name,
-      patient_phone: row.patient_phone,
-      patient_email: row.patient_email,
-      patient_nic: row.patient_nic,
-      patient_dob: row.patient_dob, // Already formatted as YYYY-MM-DD
-      patient_gender: row.patient_gender,
-      patient_age: row.patient_age,
-      slt_phone: row.slt_phone,
-      appointment_date: row.appointment_date, // Already formatted as YYYY-MM-DD
-      appointment_time: row.appointment_time,
-      status: row.status,
-      payment_method: row.payment_method,
-      total_amount: row.total_amount,
-      is_member: row.is_member,
-      send_sms: row.send_sms,
-      send_email: row.send_email,
-      notes: row.notes,
-      doctor_name: row.doctor_name || row.doctor_full_name,
-      specialty: row.specialty,
-      hospital: row.hospital,
-      city: row.city,
-      consultation_fee: parseFloat(row.consultation_fee) || 3000,
-      refund_eligible: row.refund_eligible,
-      payment_status: row.payment_status,
-      transaction_id: row.transaction_id,
-      timeSlot:
-        row.start_time && row.end_time
-          ? `${row.start_time} - ${row.end_time}`
-          : "",
-      created_at: row.created_at,
-      updated_at: row.updated_at,
+    // Format the response
+    const appointments = appointmentsData.map((appt) => ({
+      id: appt.id,
+      user_id: appt.user_id,
+      doctor_id: appt.doctor_id,
+      patient_name: appt.patient_name,
+      patient_phone: appt.patient_phone,
+      patient_email: appt.patient_email,
+      patient_nic: appt.patient_nic,
+      patient_dob: appt.patient_dob?.toISOString().split("T")[0] || null,
+      patient_gender: appt.patient_gender,
+      patient_age: appt.patient_age,
+      slt_phone: appt.slt_phone,
+      appointment_date: appt.appointment_date.toISOString().split("T")[0],
+      appointment_time: appt.appointment_time,
+      status: appt.status,
+      payment_method: appt.payment_method,
+      total_amount: parseFloat(appt.total_amount.toString()),
+      is_member: appt.is_member,
+      send_sms: appt.send_sms,
+      send_email: appt.send_email,
+      notes: appt.notes,
+      doctor_name: appt.doctor_name,
+      specialty: appt.specialty,
+      hospital: appt.hospital,
+      refund_eligible: appt.refund_eligible,
+      payment_status: appt.payments[0]?.payment_status || null,
+      transaction_id: appt.payments[0]?.transaction_id || null,
+      created_at: appt.created_at,
+      updated_at: appt.updated_at,
     }));
 
     return NextResponse.json({ appointments, total }, { status: 200 });

@@ -3,14 +3,19 @@ import pool from "@/lib/db";
 import jwt from "jsonwebtoken";
 
 export async function POST(request: NextRequest) {
+  console.log("Request received at /api/appointments/cancel");
   let client;
 
   try {
     // Connect to database with timeout
     client = (await Promise.race([
       pool.connect(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Database connection timeout")), 5000)
+      new Promise(
+        (_, reject) =>
+          setTimeout(
+            () => reject(new Error("Database connection timeout")),
+            10000
+          ) // Increase timeout to 10 seconds
       ),
     ])) as any;
 
@@ -87,15 +92,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update appointment status
-    await client.query(
-      `UPDATE appointments 
-       SET status = 'cancelled', 
-           cancellation_date = NOW(),
-           cancelled_by = $2
-       WHERE id = $1`,
-      [appointmentId, decoded.userId]
+    // Check which columns exist in the appointments table
+    const columnsCheckAppointments = await client.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'appointments' AND column_name IN ('cancellation_date', 'cancelled_by')
+    `);
+
+    const existingColumns = columnsCheckAppointments.rows.map(
+      (row: any) => row.column_name
     );
+    const hasCancellationDate = existingColumns.includes("cancellation_date");
+    const hasCancelledBy = existingColumns.includes("cancelled_by");
+
+    // Update appointment status with available columns
+    let updateQuery = `UPDATE appointments SET status = 'cancelled'`;
+    const updateParams: any[] = [appointmentId];
+    let paramCount = 1;
+
+    if (hasCancellationDate) {
+      updateQuery += `, cancellation_date = NOW()`;
+    }
+
+    if (hasCancelledBy) {
+      paramCount++;
+      updateQuery += `, cancelled_by = $${paramCount}`;
+      updateParams.push(decoded.userId);
+    }
+
+    updateQuery += ` WHERE id = $1`;
+
+    await client.query(updateQuery, updateParams);
 
     // Decrease booked appointments count if availability_id exists
     if (appointment.availability_id) {
@@ -115,61 +142,78 @@ export async function POST(request: NextRequest) {
         const columnsCheck = await client.query(`
           SELECT column_name 
           FROM information_schema.columns 
-          WHERE table_name = 'payments' AND column_name = 'updated_at'
+          WHERE table_name = 'payments' AND column_name IN ('refund_date', 'refund_amount', 'updated_at')
         `);
 
-        const hasUpdatedAt = columnsCheck.rows.length > 0;
+        const paymentColumns = columnsCheck.rows.map(
+          (row: any) => row.column_name
+        );
+        const hasRefundDate = paymentColumns.includes("refund_date");
+        const hasRefundAmount = paymentColumns.includes("refund_amount");
+        const hasUpdatedAt = paymentColumns.includes("updated_at");
+
+        let paymentUpdateQuery = `UPDATE payments SET payment_status = 'refunded'`;
+        const paymentParams: any[] = [appointment.payment_id];
+
+        if (hasRefundDate) {
+          paymentUpdateQuery += `, refund_date = NOW()`;
+        }
+
+        if (hasRefundAmount && appointment.total_amount) {
+          paymentParams.push(appointment.total_amount);
+          paymentUpdateQuery += `, refund_amount = $${paymentParams.length}`;
+        }
 
         if (hasUpdatedAt) {
-          await client.query(
-            `UPDATE payments 
-             SET payment_status = 'refunded',
-                 refund_date = NOW(),
-                 refund_amount = $2,
-                 updated_at = NOW()
-             WHERE id = $1`,
-            [appointment.payment_id, appointment.total_amount]
-          );
-        } else {
-          // Fallback without updated_at
-          await client.query(
-            `UPDATE payments 
-             SET payment_status = 'refunded',
-                 refund_date = NOW(),
-                 refund_amount = $2
-             WHERE id = $1`,
-            [appointment.payment_id, appointment.total_amount]
-          );
+          paymentUpdateQuery += `, updated_at = NOW()`;
         }
+
+        paymentUpdateQuery += ` WHERE id = $1`;
+
+        await client.query(paymentUpdateQuery, paymentParams);
       }
 
-      // Create refund record for tracking
-      await client.query(
-        `INSERT INTO refunds (
-          appointment_id, 
-          user_id, 
-          amount, 
-          status, 
-          refund_reason,
-          created_at
-        ) VALUES ($1, $2, $3, $4, $5, NOW())`,
-        [
-          appointmentId,
-          decoded.userId,
-          appointment.total_amount,
-          "pending",
-          "User requested cancellation with refund",
-        ]
-      );
+      // Create refund record for tracking - check if refunds table exists first
+      try {
+        const refundsTableCheck = await client.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'refunds'
+          );
+        `);
 
-      // Log the refund request
-      console.log(
-        `Refund requested for appointment ${appointmentId}, amount: ${appointment.total_amount}`
-      );
+        if (refundsTableCheck.rows[0].exists) {
+          await client.query(
+            `INSERT INTO refunds (
+              appointment_id, 
+              user_id, 
+              amount, 
+              status, 
+              refund_reason,
+              created_at
+            ) VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [
+              appointmentId,
+              decoded.userId,
+              appointment.total_amount,
+              "pending",
+              "User requested cancellation with refund",
+            ]
+          );
+
+          console.log(
+            `Refund requested for appointment ${appointmentId}, amount: ${appointment.total_amount}`
+          );
+        }
+      } catch (refundError) {
+        console.error("Refund record creation failed:", refundError);
+        // Continue without creating refund record
+      }
     } else {
       // Just mark payment as cancelled (no refund)
       if (appointment.payment_id) {
-        // Check if updated_at column exists
+        // Check which columns exist
         const columnsCheck = await client.query(`
           SELECT column_name 
           FROM information_schema.columns 

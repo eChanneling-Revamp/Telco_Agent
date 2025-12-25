@@ -45,20 +45,58 @@ const AdminLoginPage = () => {
       return;
     }
 
-    // Frontend-only implementation - no backend API call
     setIsLoading(true);
 
-    // Simulate a delay for frontend demonstration
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/newauth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({
+          email: "",
+          password: data.error || "Invalid credentials",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user has admin role
+      if (data.user.role !== "admin" && data.user.role !== "superadmin") {
+        setErrors({
+          email: "",
+          password: "Unauthorized: Admin access required",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Store user info in localStorage if "Remember me" is checked
       if (rememberMe) {
         localStorage.setItem("adminEmail", email);
       }
 
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       // Redirect to admin dashboard
       router.push("/admin/dashboard");
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({
+        email: "",
+        password: "An error occurred. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

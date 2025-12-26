@@ -51,9 +51,13 @@ export default function AppointmentBookingPage() {
       const payload = {
         doctorId: selectedDoctor.id,
         availabilityId: selectedDoctor.availabilityId,
-        patientName: patientData.name,
-        patientPhone: patientData.mobile,
-        patientEmail: "",
+        name: patientData.name, // ✅ Changed from patientName
+        mobile: patientData.mobile, // ✅ Changed from patientPhone
+        email: patientData.email || "", // ✅ Changed from patientEmail
+        nic: patientData.nic, // ✅ Changed from patientNIC
+        dob: patientData.dob, // ✅ Changed from patientDOB
+        gender: patientData.gender, // ✅ Changed from patientGender
+        age: patientData.age, // ✅ Changed from patientAge
         sltPhone: patientData.mobile,
         notes: "",
         appointmentDate: selectedDate,
@@ -114,6 +118,8 @@ export default function AppointmentBookingPage() {
               doctor={selectedDoctor}
               onNext={handleDateTimeSelect}
               onBack={() => setStep(1)}
+              initialDate={selectedDate} // ← Add this line
+              initialTime={selectedTime} // ← Add this line
             />
           )}
 
@@ -124,6 +130,7 @@ export default function AppointmentBookingPage() {
               time={selectedTime}
               onNext={handlePatientSubmit}
               onBack={() => setStep(2)}
+              initialData={patientData} // ← Add this line
             />
           )}
 

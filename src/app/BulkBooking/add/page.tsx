@@ -30,21 +30,31 @@ export default function AddBulkBookingPage() {
       const bookingPromises = cart.map(async (item) => {
         const appointmentData = {
           doctorId: item.selectedDoctor.id,
-          availabilityId: null, // Set to null or fetch from backend if needed
-          patientName: item.patientName,
-          patientPhone: item.patientMobile,
-          patientEmail: null,
+          availabilityId: null,
+
+          // ❗ FIX FIELD NAMES
+          name: item.patientName,
+          mobile: item.patientMobile,
+          email: item.patientEmail || null,
+
+          nic: item.patientNIC,
+          dob: item.patientDOB,
+          gender: item.patientGender,
+          age: item.patientAge,
+
           sltPhone: item.patientMobile,
-          notes: `NIC: ${item.patientNIC}`,
+          notes: `NIC: ${item.patientNIC}, DOB: ${item.patientDOB}, Gender: ${item.patientGender}, Age: ${item.patientAge}`,
+
           appointmentDate: item.appointmentDate,
           appointmentTime: item.selectedTime,
+
           paymentMethod: "bill",
-          totalAmount:
-            Number(item.selectedDoctor.consultation_fee || 0) +
-            (item.refundDeposit ? 250 : 0),
+          totalAmount: item.totalPrice,
+
           isMember: false,
           sendSms: true,
           sendEmail: false,
+          sendEmail: Boolean(item.patientEmail),
           agreeRefund: item.refundDeposit,
         };
 
@@ -195,6 +205,19 @@ export default function AddBulkBookingPage() {
                                   {item.selectedDoctor.hospital}
                                 </p>
 
+                                <p className="text-xs text-gray-500">
+                                  DOB: {item.patientDOB}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Gender: {item.patientGender}
+                                </p>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Age: {item.patientAge}
+                                </p>
+                                <p className="text-xs text-gray-500 mb-1">
+                                  Email: {item.patientEmail}
+                                </p>
+
                                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -240,7 +263,7 @@ export default function AddBulkBookingPage() {
                                     Fee:
                                   </span>
                                   <span className="font-bold text-blue-600">
-                                    Rs. {item.selectedDoctor.consultation_fee}
+                                    Rs. {item.totalPrice}
                                   </span>
                                 </div>
 

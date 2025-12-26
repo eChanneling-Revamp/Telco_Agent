@@ -98,41 +98,6 @@ export default function Header({
           </button>
         </div>
 
-        {/* Account Selector
-        <div className="relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center space-x-1 text-white hover:bg-white/30 bg-white/20 rounded-xl px-3 py-1 transition"
-          >
-            <span className="text-sm">{selectedAccount}</span>
-            <ChevronDown className="h-4 w-4" />
-          </button>
-          {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    onAccountChange("Account 1");
-                    setIsMenuOpen(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                >
-                  Account 1
-                </button>
-                <button
-                  onClick={() => {
-                    onAccountChange("Account 2");
-                    setIsMenuOpen(false);
-                  }}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                >
-                  Account 2
-                </button>
-              </div>
-            </div>
-          )}
-        </div> */}
-
         {/* User Menu */}
         <div className="relative">
           <div

@@ -6,17 +6,18 @@ import {
   Mail,
   Download,
   AlertCircle,
-  Printer,
+  CheckCircle,
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type AppointmentDetailsModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAppointmentCancelled?: () => void;
   appointment?: {
     id: number;
     appointmentId: string;
-    status: "Confirmed" | "Cancelled" | "Pending" | "Completed";
+    status: string;
     doctor: string;
     specialization?: string;
     hospital?: string;
@@ -25,6 +26,11 @@ type AppointmentDetailsModalProps = {
     amount?: number;
     patientName: string;
     patientPhone?: string;
+    patientEmail?: string;
+    patientNIC?: string;
+    patientDOB?: string;
+    patientGender?: string;
+    patientAge?: number;
     basePrice?: number;
     refundDeposit?: number;
     total?: number;
@@ -35,29 +41,143 @@ type AppointmentDetailsModalProps = {
 export default function AppointmentDetailsModal({
   isOpen,
   onClose,
+  onAppointmentCancelled,
   appointment,
 }: AppointmentDetailsModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [cancellationSuccess, setCancellationSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [showEmailSuccessPopup, setShowEmailSuccessPopup] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  // Replace your existing handleSendEmail function with this:
+
+const handleSendEmail = async () => {
+  // Check if email exists in appointment data
+  if (!appointment?.patientEmail || appointment.patientEmail === "N/A") {
+    setEmailError(
+      "No email address found for this patient. Please add an email address to the patient details."
+    );
+    setTimeout(() => setEmailError(null), 5000);
+    return;
+  }
+
+  setIsSendingEmail(true);
+  setEmailError(null);
+  setShowEmailSuccessPopup(false);
+
+  try {
+    // Get the total amount
+    const totalAmount = appointment.total || appointment.total_amount || appointment.amount || 0;
+    
+    // Calculate base price and refund deposit
+    // If basePrice and refundDeposit exist in appointment, use them
+    // Otherwise calculate: base price = total - refund deposit (if refund exists)
+    let basePrice = appointment.basePrice;
+    let refundDeposit = appointment.refundDeposit || 0;
+    
+    // If basePrice is not available, calculate it
+    if (!basePrice) {
+      // Check if there's a refund deposit
+      // Assuming refund deposit is around 250 if refund_eligible is true
+      if (appointment.refundEligible || appointment.refund_eligible) {
+        // You might need to adjust this logic based on your business rules
+        // For now, we'll calculate: basePrice = total - 250 (or use a percentage)
+        refundDeposit = 250; // or calculate based on percentage
+        basePrice = totalAmount - refundDeposit;
+      } else {
+        // No refund, so total is the base price
+        basePrice = totalAmount;
+        refundDeposit = 0;
+      }
+    }
+    
+    const response = await fetch("/api/appointments/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: appointment.patientEmail,
+        appointmentDetails: {
+          appointmentId: appointment.appointmentId,
+          doctor: appointment.doctor,
+          specialization: appointment.specialization,
+          hospital: appointment.hospital,
+          date: appointment.date,
+          time: appointment.time,
+          patientName: appointment.patientName,
+          patientPhone: appointment.patientPhone,
+          patientNIC: appointment.patientNIC,
+          basePrice: basePrice,
+          refundDeposit: refundDeposit,
+          total: totalAmount,
+          status: currentStatus,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send email");
+    }
+
+    setIsSendingEmail(false);
+    setShowEmailSuccessPopup(true);
+
+    // Auto-hide success popup after 3 seconds
+    setTimeout(() => {
+      setShowEmailSuccessPopup(false);
+    }, 3000);
+  } catch (err: any) {
+    setIsSendingEmail(false);
+    setEmailError(err.message);
+    console.error("Error sending email:", err);
+
+    // Auto-hide error message after 5 seconds
+    setTimeout(() => setEmailError(null), 5000);
+  }
+};
+
+  // Local state to track current appointment status
+  const [currentStatus, setCurrentStatus] = useState(appointment?.status || "");
+
+  // Update local status when appointment prop changes
+  useEffect(() => {
+    if (appointment?.status) {
+      setCurrentStatus(appointment.status);
+    }
+  }, [appointment?.status]);
 
   if (!isOpen || !appointment) return null;
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Confirmed":
+    const normalizedStatus = status.toLowerCase();
+    switch (normalizedStatus) {
+      case "confirmed":
         return "bg-green-100 text-green-700";
-      case "Cancelled":
+      case "cancelled":
         return "bg-rose-100 text-rose-700";
-      case "Pending":
+      case "pending":
         return "bg-amber-100 text-amber-700";
-      case "Completed":
+      case "completed":
         return "bg-blue-100 text-blue-700";
       default:
         return "bg-green-100 text-green-700";
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+  };
+
   const downloadAsImage = () => {
-    // Open print dialog where user can save as PDF or image
     if (receiptRef.current) {
       const printWindow = window.open("", "", "width=800,height=600");
       if (printWindow) {
@@ -71,7 +191,6 @@ export default function AppointmentDetailsModal({
   };
 
   const downloadAsPdf = () => {
-    // Open print dialog for PDF download
     if (receiptRef.current) {
       const printWindow = window.open("", "", "width=800,height=600");
       if (printWindow) {
@@ -96,11 +215,104 @@ export default function AppointmentDetailsModal({
     }
   };
 
+  const hasRefundDeposit =
+    appointment.refundDeposit && appointment.refundDeposit > 0;
+
+  const handleCancelAppointment = async () => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/appointments/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId: appointment.id,
+          withRefund: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel appointment");
+      }
+
+      setIsProcessing(false);
+      setShowCancelModal(false);
+
+      // Update local status immediately
+      setCurrentStatus("cancelled");
+
+      setCancellationSuccess(true);
+
+      // Auto close success message and refresh after 3 seconds
+      setTimeout(() => {
+        setCancellationSuccess(false);
+        if (onAppointmentCancelled) {
+          onAppointmentCancelled();
+        }
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setError(err.message);
+      console.error("Error cancelling appointment:", err);
+    }
+  };
+
+  const handleCancelWithRefund = async () => {
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/appointments/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          appointmentId: appointment.id,
+          withRefund: true,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process refund");
+      }
+
+      setIsProcessing(false);
+      setShowRefundModal(false);
+
+      // Update local status immediately
+      setCurrentStatus("cancelled");
+
+      setCancellationSuccess(true);
+
+      // Auto close success message and refresh after 3 seconds
+      setTimeout(() => {
+        setCancellationSuccess(false);
+        if (onAppointmentCancelled) {
+          onAppointmentCancelled();
+        }
+        onClose();
+      }, 3000);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setError(err.message);
+      console.error("Error processing refund:", err);
+    }
+  };
+
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50  z-40 transition-opacity"
+        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
       />
 
@@ -122,6 +334,14 @@ export default function AppointmentDetailsModal({
 
           {/* Content */}
           <div className="p-6 space-y-6">
+            {/* Email Error Message */}
+            {emailError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{emailError}</p>
+              </div>
+            )}
+
             {/* Appointment Summary */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -140,11 +360,11 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
-                    className={`inline-block px-3 py-1 bg-green-100 rounded-full text-sm font-semibold ${getStatusColor(
-                      appointment.status
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
+                      currentStatus
                     )}`}
                   >
-                    {appointment.status}
+                    {getStatusLabel(currentStatus)}
                   </span>
                 </div>
 
@@ -175,7 +395,9 @@ export default function AppointmentDetailsModal({
                   <p className="text-base font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time}</p>
+                  <p className="text-sm text-gray-700">
+                    {appointment.time || "N/A"}
+                  </p>
                 </div>
 
                 {/* Total Amount */}
@@ -203,7 +425,7 @@ export default function AppointmentDetailsModal({
                       </span>
                     </div>
                   )}
-                  {appointment.refundDeposit && (
+                  {appointment.refundDeposit > 0 && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-700">Refund Deposit:</span>
                       <span className="font-semibold text-cyan-600">
@@ -226,7 +448,7 @@ export default function AppointmentDetailsModal({
             )}
 
             {/* Refund Eligibility */}
-            {appointment.refundEligible && (
+            {appointment.refundEligible && appointment.refundDeposit > 0 && (
               <div>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
                   <AlertCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
@@ -254,7 +476,7 @@ export default function AppointmentDetailsModal({
                   </label>
                   <input
                     type="text"
-                    value={appointment.patientName}
+                    value={appointment.patientName || "N/A"}
                     readOnly
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
                   />
@@ -270,41 +492,129 @@ export default function AppointmentDetailsModal({
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
                   />
                 </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Email Address
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientEmail || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    NIC Number
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientNIC || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Date of Birth
+                  </label>
+                  <input
+                    type="text"
+                    value={appointment.patientDOB || "N/A"}
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Gender
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      appointment.patientGender
+                        ? appointment.patientGender.charAt(0).toUpperCase() +
+                          appointment.patientGender.slice(1)
+                        : "N/A"
+                    }
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="text-sm text-gray-600 mb-2 block">
+                    Age
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      appointment.patientAge
+                        ? `${appointment.patientAge} years`
+                        : "N/A"
+                    }
+                    readOnly
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-semibold"
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
-                <FileText className="w-5 h-5" />
-                Send SMS Receipt
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition">
-                <Mail className="w-5 h-5" />
-                Send Email Receipt
-              </button>
-              <button
-                onClick={downloadAsPdf}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
-              >
-                <Download className="w-5 h-5" />
-                Download PDF
-              </button>
-              <button
-                onClick={downloadAsImage}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-gray-50 transition"
-              >
-                <Download className="w-5 h-5" />
-                Download Image
-              </button>
-              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
-                <X className="w-5 h-5" />
-                Cancel Appointment
-              </button>
-              <button className=" flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
-                <AlertCircle className="w-5 h-5" />
-                Cancel & Refund
-              </button>
+            <div>
+              {/* Action Buttons */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Actions
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition">
+                  <FileText className="w-5 h-5" />
+                  Send SMS Receipt
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={isSendingEmail}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Mail className="w-5 h-5" />
+                  {isSendingEmail ? "Sending..." : "Send Email Receipt"}
+                </button>
+                <button
+                  onClick={downloadAsPdf}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition"
+                >
+                  <Download className="w-5 h-5" />
+                  Download PDF
+                </button>
+                <button
+                  onClick={downloadAsImage}
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-blue-500 rounded-lg text-blue-700 font-semibold hover:bg-blue-50 transition"
+                >
+                  <Download className="w-5 h-5" />
+                  Download Image
+                </button>
+                <button
+                  className={`flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                    !hasRefundDeposit ? "col-span-2" : ""
+                  }`}
+                  onClick={() => setShowCancelModal(true)}
+                  disabled={currentStatus === "cancelled"}
+                >
+                  <X className="w-5 h-5" />
+                  {currentStatus === "cancelled"
+                    ? "Appointment Cancelled"
+                    : "Cancel Appointment"}
+                </button>
+                {hasRefundDeposit && (
+                  <button
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setShowRefundModal(true)}
+                    disabled={currentStatus === "cancelled"}
+                  >
+                    <AlertCircle className="w-5 h-5" />
+                    {currentStatus === "cancelled"
+                      ? "Cancelled"
+                      : "Cancel & Refund"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -335,7 +645,7 @@ export default function AppointmentDetailsModal({
                 <div>
                   <p className="text-sm text-gray-600">Status</p>
                   <p className="font-semibold text-gray-900">
-                    {appointment.status}
+                    {getStatusLabel(currentStatus)}
                   </p>
                 </div>
                 <div>
@@ -343,7 +653,9 @@ export default function AppointmentDetailsModal({
                   <p className="font-semibold text-gray-900">
                     {appointment.date}
                   </p>
-                  <p className="text-sm text-gray-700">{appointment.time}</p>
+                  <p className="text-sm text-gray-700">
+                    {appointment.time || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Hospital</p>
@@ -354,17 +666,55 @@ export default function AppointmentDetailsModal({
               </div>
 
               <div className="border-t-2 border-b-2 border-gray-300 py-4 mb-6">
+                <p className="text-sm font-semibold text-gray-900 mb-3">
+                  Patient Information
+                </p>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Patient Name</p>
                     <p className="font-semibold text-gray-900">
-                      {appointment.patientName}
+                      {appointment.patientName || "N/A"}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-semibold text-gray-900">
                       {appointment.patientPhone || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientEmail || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">NIC</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientNIC || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date of Birth</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientDOB || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Gender</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientGender
+                        ? appointment.patientGender.charAt(0).toUpperCase() +
+                          appointment.patientGender.slice(1)
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Age</p>
+                    <p className="font-semibold text-gray-900">
+                      {appointment.patientAge
+                        ? `${appointment.patientAge} years`
+                        : "N/A"}
                     </p>
                   </div>
                 </div>
@@ -382,7 +732,7 @@ export default function AppointmentDetailsModal({
                         Rs. {appointment.basePrice}
                       </span>
                     </div>
-                    {appointment.refundDeposit && (
+                    {appointment.refundDeposit > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-700">Refund Deposit:</span>
                         <span className="font-semibold">
@@ -400,7 +750,7 @@ export default function AppointmentDetailsModal({
                 </div>
               )}
 
-              {appointment.refundEligible && (
+              {appointment.refundEligible && appointment.refundDeposit > 0 && (
                 <div className="bg-gray-100 p-4 rounded-lg mb-6">
                   <p className="font-semibold text-gray-900 mb-2">
                     Refund Eligibility
@@ -419,6 +769,168 @@ export default function AppointmentDetailsModal({
           </div>
         </div>
       </div>
+
+      {/* Cancel Appointment Confirmation Modal */}
+      {showCancelModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-[60]"
+            onClick={() => !isProcessing && setShowCancelModal(false)}
+          />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                  <AlertCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                  Cancel Appointment?
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  Are you sure you want to cancel this appointment with{" "}
+                  {appointment.doctor}? This action cannot be undone.
+                </p>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCancelModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    disabled={isProcessing}
+                  >
+                    No, Keep It
+                  </button>
+                  <button
+                    onClick={handleCancelAppointment}
+                    className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Cancelling..." : "Yes, Cancel"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Cancel & Refund Confirmation Modal */}
+      {showRefundModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-[60]"
+            onClick={() => !isProcessing && setShowRefundModal(false)}
+          />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-emerald-100 rounded-full mb-4">
+                  <AlertCircle className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 text-center mb-2">
+                  Cancel & Request Refund?
+                </h3>
+                <p className="text-gray-600 text-center mb-4">
+                  Are you sure you want to cancel this appointment and request a
+                  refund?
+                </p>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-gray-700">
+                      Refund Amount:
+                    </span>
+                    <span className="text-lg font-bold text-emerald-600">
+                      Rs. {appointment.refundDeposit}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    {appointment.refundEligible ||
+                      "Refund will be processed within 5-7 business days"}
+                  </p>
+                </div>
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowRefundModal(false)}
+                    className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition"
+                    disabled={isProcessing}
+                  >
+                    No, Keep It
+                  </button>
+                  <button
+                    onClick={handleCancelWithRefund}
+                    className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? "Processing..." : "Yes, Refund"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Appointment Cancellation Success Popup */}
+      {cancellationSuccess && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[60]" />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                  <CheckCircle className="w-10 h-10 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {hasRefundDeposit
+                    ? "Refund Initiated!"
+                    : "Appointment Cancelled"}
+                </h3>
+                <p className="text-gray-600">
+                  {hasRefundDeposit
+                    ? `Your appointment has been cancelled and a refund of Rs. ${appointment.refundDeposit} will be processed within 5-7 business days.`
+                    : "Your appointment has been successfully cancelled."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Email Success Popup */}
+      {showEmailSuccessPopup && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[70]" />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-md animate-scale-in">
+              <div className="p-6 text-center">
+                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-green-100 rounded-full mb-4">
+                  <Mail className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Email Sent Successfully!
+                </h3>
+                <p className="text-gray-600 mb-1">Receipt has been sent to:</p>
+                <p className="text-blue-600 font-semibold">
+                  {appointment.patientEmail}
+                </p>
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    ✓ The patient will receive the appointment details via email
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 }

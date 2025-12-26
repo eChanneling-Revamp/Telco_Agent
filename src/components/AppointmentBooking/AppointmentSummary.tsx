@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { CheckCircle, Loader, AlertCircle } from "lucide-react";
 
@@ -34,35 +32,48 @@ export default function AppointmentSummary({
 }: AppointmentSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [popup, setPopup] = useState<PopupType>(null);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleConfirm = async () => {
     setIsLoading(true);
+    setErrorMessage("");
+
     try {
-      // Call the actual booking function immediately
+      console.log("📋 Submitting appointment with data:", {
+        doctor: doctor.name,
+        date,
+        time,
+        patient: patientData.name,
+      });
+
       const result = await onConfirm();
 
       if (result.success) {
+        console.log("✅ Appointment confirmed successfully");
         setPopup("success");
-        // Auto-close success popup after 2 seconds and call onSuccess
         setTimeout(() => {
           setPopup(null);
           if (onSuccess) onSuccess();
         }, 2000);
       } else {
+        console.error("❌ Appointment booking failed:", result.error);
+        setErrorMessage(result.error || "Failed to book appointment");
         setPopup("error");
         setIsLoading(false);
-        // Auto-close error popup after 3 seconds
-        setTimeout(() => setPopup(null), 3000);
+        // Auto-close error popup after 5 seconds
+        setTimeout(() => setPopup(null), 5000);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("❌ Exception during booking:", error);
+      setErrorMessage(error.message || "An unexpected error occurred");
       setPopup("error");
       setIsLoading(false);
-      setTimeout(() => setPopup(null), 3000);
+      setTimeout(() => setPopup(null), 5000);
     }
   };
 
   return (
-    <div className="mx-auto p-6 px-2 py-6 mb-2">
+    <div className="mx-auto p-6 px-2 py-6 mb-2 text-black">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">
         Place an Appointment
       </h1>
@@ -102,9 +113,39 @@ export default function AppointmentSummary({
               <p className="text-sm text-gray-600">{time}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500 mb-1">Patient</p>
+              <p className="text-sm text-gray-500 mb-1">Patient Name</p>
               <p className="font-medium text-gray-900">{patientData.name}</p>
-              <p className="text-sm text-gray-600">{patientData.nic}</p>
+              {/* <p className="text-sm text-gray-600">{patientData.nic}</p>
+              <p className="text-sm text-gray-600">{patientData.mobile}</p> */}
+            </div>
+          </div>
+
+          {/* Patient Details Summary */}
+          <div className="pb-4 border-b border-gray-200">
+            <p className="text-sm text-gray-500 mb-2">Patient Information</p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-600">Age:</span>{" "}
+                <span className="font-medium">{patientData.age || "N/A"}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Mobile:</span>{" "}
+                <span className="font-medium">{patientData.mobile || "N/A"}</span>
+              </div>
+               <div>
+                <span className="text-gray-600">NIC:</span>{" "}
+                <span className="font-medium">{patientData.nic || "N/A"}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Gender:</span>{" "}
+                <span className="font-medium capitalize">
+                  {patientData.gender || "N/A"}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">DOB:</span>{" "}
+                <span className="font-medium">{patientData.dob || "N/A"}</span>
+              </div>
             </div>
           </div>
 
@@ -195,15 +236,21 @@ export default function AppointmentSummary({
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
                 <AlertCircle className="w-8 h-8 text-red-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900">Error</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                Booking Failed
+              </h3>
               <p className="text-gray-600">
-                Failed to book appointment. Please try again.
+                {errorMessage ||
+                  "Failed to book appointment. Please try again."}
               </p>
               <button
-                onClick={() => setPopup(null)}
+                onClick={() => {
+                  setPopup(null);
+                  setErrorMessage("");
+                }}
                 className="w-full mt-2 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition"
               >
-                Try Again
+                Close
               </button>
             </div>
           </div>

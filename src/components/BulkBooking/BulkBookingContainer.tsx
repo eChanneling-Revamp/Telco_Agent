@@ -23,8 +23,12 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
 
   const [patientName, setPatientName] = useState("");
   const [patientNIC, setPatientNIC] = useState("");
+  const [patientDOB, setPatientDOB] = useState("");
+  const [patientGender, setPatientGender] = useState("");
+  const [patientAge, setPatientAge] = useState("");
+  const [patientEmail, setPatientEmail] = useState("");
   const [patientMobile, setPatientMobile] = useState("");
-  const [refundDeposit, setRefundDeposit] = useState(false);
+  const [agreeRefund, setAgreeRefund] = useState(false);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
 
@@ -89,8 +93,12 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
     setAppointmentDate("");
     setPatientName("");
     setPatientNIC("");
+    setPatientDOB("");
+    setPatientGender("");
+    setPatientAge("");
     setPatientMobile("");
-    setRefundDeposit(false);
+    setPatientEmail("");
+    setAgreeRefund(false);
   };
 
   /* ------------------ DOCTOR LIST SCREEN ------------------ */
@@ -158,67 +166,211 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
     );
   }
 
-  /* ------------------ BOOKING FORM ------------------ */
+  /* ------------------ BOOKING FORM (PRICE & PATIENT DETAILS) ------------------ */
   if (showBookingForm && selectedTime) {
+    const basePrice = Number(selectedDoctor?.consultation_fee || 0);
+    const refund = 250;
+    const totalPrice = agreeRefund ? basePrice + refund : basePrice;
+
     return (
       <div className="space-y-6">
-        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
-          <div className="text-sm text-gray-500">Selected Slot</div>
-          <div className="font-bold text-lg text-gray-900">
-            {appointmentDate} • {selectedTime}
+        {/* Selected Doctor Info */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <p className="text-sm text-gray-500 mb-2">Selected Doctor</p>
+          <p className="font-semibold text-gray-900">{selectedDoctor?.name}</p>
+          <p className="text-sm text-gray-600">{selectedDoctor?.specialty}</p>
+          <p className="text-sm text-gray-600">{selectedDoctor?.hospital}</p>
+          <button
+            onClick={resetForm}
+            className="text-blue-600 underline mt-2 text-sm hover:text-blue-700"
+          >
+            Change Doctor
+          </button>
+        </div>
+
+        {/* Appointment Date & Time */}
+        <div>
+          <p className="text-sm text-gray-500 mb-2">Appointment Date & Time</p>
+          <p className="font-medium text-gray-900">{appointmentDate}</p>
+          <p className="text-sm text-gray-600">{selectedTime}</p>
+        </div>
+
+        {/* Pricing Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Price & Refund Option
+          </h2>
+
+          <p className="text-sm text-gray-500 mb-1">Base Price</p>
+          <p className="text-2xl font-bold text-blue-800 mb-4">
+            Rs. {basePrice}
+          </p>
+
+          {/* Refund Box */}
+          <div className="border-2 border-blue-100 rounded-lg p-4 mb-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreeRefund}
+                onChange={(e) => setAgreeRefund(e.target.checked)}
+                className="mt-1 w-5 h-5"
+              />
+              <div>
+                <p className="font-medium text-gray-900">
+                  Customer agrees to pay additional Rs. 250 for full refund
+                  eligibility
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  This amount makes the appointment fully refund-able if
+                  cancelled.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Total Price */}
+          <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-gray-900">Total Price</span>
+              <span className="text-2xl font-bold text-teal-600">
+                Rs. {totalPrice}
+              </span>
+            </div>
+            {agreeRefund && (
+              <p className="text-xs text-gray-600 mt-2">
+                Base Fee: Rs. {basePrice} + Refund Deposit: Rs. {refund} =
+                Total: Rs. {totalPrice}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="space-y-4">
-          <input
-            value={patientName}
-            onChange={(e) => setPatientName(e.target.value)}
-            placeholder="Patient Name"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        {/* PATIENT DETAILS */}
+        <h3 className="text-lg font-semibold text-gray-900 mt-6">
+          Patient Details
+        </h3>
 
-          <input
-            value={patientNIC}
-            onChange={(e) => setPatientNIC(e.target.value)}
-            placeholder="NIC Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-
-          <input
-            value={patientMobile}
-            onChange={(e) => setPatientMobile(e.target.value)}
-            placeholder="Mobile Number"
-            className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-
-          <label className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 cursor-pointer hover:bg-blue-100 transition-all">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-black">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Name <span className="text-red-500">*</span>
+            </label>
             <input
-              type="checkbox"
-              checked={refundDeposit}
-              onChange={() => setRefundDeposit(!refundDeposit)}
-              className="w-4 h-4"
+              type="text"
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              placeholder="Priyani"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
             />
-            <span className="text-gray-700">
-              Add Rs. 250 Refundable Deposit
-            </span>
-          </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient NIC <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={patientNIC}
+              onChange={(e) => setPatientNIC(e.target.value)}
+              placeholder="123456789V"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Mobile Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              value={patientMobile}
+              onChange={(e) => setPatientMobile(e.target.value)}
+              placeholder="0712345678"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient Email{" "}
+              <span className="text-gray-400 text-xs">(Optional)</span>
+            </label>
+            <input
+              type="email"
+              value={patientEmail}
+              onChange={(e) => setPatientEmail(e.target.value)}
+              placeholder="example@email.com"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={patientDOB}
+              onChange={(e) => setPatientDOB(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={patientGender}
+              onChange={(e) => setPatientGender(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            >
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Age <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={patientAge}
+              onChange={(e) => setPatientAge(e.target.value)}
+              placeholder="25"
+              min="0"
+              max="150"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
+            />
+          </div>
         </div>
 
-        <div className="flex gap-3">
+        {/* ACTION BUTTONS */}
+        <div className="flex gap-4">
           <button
             onClick={() => {
               setShowBookingForm(false);
               setSelectedTime(null);
             }}
-            className="w-1/3 bg-gray-200 text-gray-700 rounded-lg py-3 font-semibold hover:bg-gray-300 transition-all"
+            className="px-6 py-3 border-2 border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition"
           >
-            Back
+            ← Back
           </button>
 
           <button
             onClick={() => {
-              if (!patientName || !patientNIC || !patientMobile) {
-                alert("Please fill all patient details");
+              if (
+                !patientName ||
+                !patientNIC ||
+                !patientMobile ||
+                !patientDOB ||
+                !patientGender ||
+                !patientAge
+              ) {
+                alert("Please fill all required patient details");
                 return;
               }
 
@@ -231,22 +383,26 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
                   patientName,
                   patientNIC,
                   patientMobile,
-                  refundDeposit,
+                  patientEmail,
+                  patientDOB,
+                  patientGender,
+                  patientAge,
+                  refundDeposit: agreeRefund,
+                  totalPrice,
                 },
               ]);
 
-              // Reset form and return to doctor list
-              setSelectedDoctor(null);
-              setShowBookingForm(false);
-              setSelectedTime(null);
-              setAppointmentDate("");
-              setPatientName("");
-              setPatientNIC("");
-              setPatientMobile("");
-              setRefundDeposit(false);
-              setShowDoctorList(true);
+              resetForm();
             }}
-            className="flex-1 bg-blue-900 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition-all shadow-md"
+            disabled={
+              !patientName ||
+              !patientNIC ||
+              !patientMobile ||
+              !patientDOB ||
+              !patientGender ||
+              !patientAge
+            }
+            className="flex-1 bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Add to Cart
           </button>

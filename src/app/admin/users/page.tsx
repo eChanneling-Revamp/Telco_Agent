@@ -6,8 +6,10 @@ import AdminHeader from "@/components/dashboard/AdminHeader";
 import { AgentsList } from "@/components/ManageAgents/AgentList";
 import { fetchAgents } from "@/lib/agent";
 import { Agent } from "@/types/agent";
+import { useRouter } from "next/navigation";
 
 export default function AgentsPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,10 @@ export default function AgentsPage() {
               <h1 className="text-4xl font-bold text-gray-900">
                 Manage Agents
               </h1>
-              <button className="bg-blue-800 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2">
+              <button
+                onClick={() => router.push("/admin/users/new")}
+                className="bg-blue-800 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors flex items-center gap-2"
+              >
                 <span className="text-xl">+</span>
                 Add New Agent
               </button>

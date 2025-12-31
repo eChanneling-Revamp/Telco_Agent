@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/components/dashboard/AdminSidebar";
 import AdminHeader from "@/components/dashboard/AdminHeader";
@@ -14,12 +14,13 @@ import { Appointment } from "@/types/appointment";
 import { Agent } from "@/types/agent";
 
 interface AgentPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function AgentPage({ params }: AgentPageProps) {
+  const { id } = use(params);
   const router = useRouter();
   const [agent, setAgent] = useState<Agent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +33,7 @@ export default function AgentPage({ params }: AgentPageProps) {
       try {
         setIsLoading(true);
         setError(null);
-        const fetchedAgent = await fetchAgentById(params.id);
+        const fetchedAgent = await fetchAgentById(id);
 
         if (!fetchedAgent) {
           setError("Agent not found");
@@ -49,23 +50,22 @@ export default function AgentPage({ params }: AgentPageProps) {
     };
 
     loadAgent();
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     const loadAppointments = async () => {
-      if (!params.id || !agent) return;
+      if (!id || !agent) return;
 
       try {
         setAppointmentsLoading(true);
         const agentName = agent.fullName || agent.username;
         const fetchedAppointments = await fetchAppointmentsByAgent(
-          params.id,
+          id,
           agentName
         );
         setAppointments(fetchedAppointments);
       } catch (err) {
         console.error("Error loading appointments:", err);
-        // Don't set error state for appointments, just log it
       } finally {
         setAppointmentsLoading(false);
       }
@@ -74,7 +74,7 @@ export default function AgentPage({ params }: AgentPageProps) {
     if (agent) {
       loadAppointments();
     }
-  }, [params.id, agent]);
+  }, [id, agent]);
 
   if (isLoading) {
     return (

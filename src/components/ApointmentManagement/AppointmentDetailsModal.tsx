@@ -1,4 +1,5 @@
 "use client";
+import html2canvas from 'html2canvas';
 
 import {
   X,
@@ -177,44 +178,887 @@ const handleSendEmail = async () => {
     return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
   };
 
-  const downloadAsImage = () => {
-    if (receiptRef.current) {
-      const printWindow = window.open("", "", "width=800,height=600");
-      if (printWindow) {
-        printWindow.document.write(receiptRef.current.innerHTML);
-        printWindow.document.close();
-        setTimeout(() => {
-          printWindow.print();
-        }, 100);
-      }
-    }
-  };
+// වඩාත්ම reliable method - PDF එකේ style එකම image එකටත් ගන්නවා
+const downloadAsImage = async () => {
+  if (!receiptRef.current) {
+    alert('Receipt not found!');
+    return;
+  }
 
+  try {
+    // Loading message
+    const loadingMsg = document.createElement('div');
+    loadingMsg.textContent = 'Generating image...';
+    loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif;';
+    document.body.appendChild(loadingMsg);
+
+    // PDF එකේ HTML එක ගන්නවා (එකම style එක)
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              background: white;
+              padding: 0;
+              margin: 0;
+              width: 210mm;
+            }
+            
+            .receipt-container {
+              width: 210mm;
+              background: white;
+              border: 2px solid #2563eb;
+              overflow: hidden;
+            }
+            
+            .receipt-header {
+              background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+              color: white;
+              padding: 20px 30px;
+              text-align: center;
+              position: relative;
+            }
+            
+            .receipt-header::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 3px;
+              background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+            }
+            
+            .receipt-header h1 {
+              font-size: 22px;
+              font-weight: 700;
+              margin-bottom: 5px;
+              letter-spacing: -0.5px;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            
+            .receipt-header .appointment-id {
+              font-size: 12px;
+              opacity: 0.95;
+              font-weight: 500;
+              background: rgba(255, 255, 255, 0.25);
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 15px;
+              margin-top: 4px;
+              border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+            
+            .receipt-body {
+              padding: 20px 30px;
+            }
+            
+            .status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 15px;
+              font-weight: 600;
+              font-size: 10px;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+            }
+            
+            .status-confirmed {
+              background: #d1fae5;
+              color: #065f46;
+            }
+            
+            .status-cancelled {
+              background: #fee2e2;
+              color: #991b1b;
+            }
+            
+            .status-pending {
+              background: #fef3c7;
+              color: #92400e;
+            }
+            
+            .status-completed {
+              background: #dbeafe;
+              color: #1e40af;
+            }
+            
+            .section {
+              margin-bottom: 16px;
+            }
+            
+            .section-title {
+              font-size: 13px;
+              font-weight: 700;
+              color: #1e40af;
+              margin-bottom: 8px;
+              padding-bottom: 4px;
+              border-bottom: 2px solid #3b82f6;
+              display: inline-block;
+              padding-right: 15px;
+            }
+            
+            .info-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+              margin-bottom: 12px;
+            }
+            
+            .info-item {
+              background: #eff6ff;
+              padding: 8px 10px;
+              border-radius: 5px;
+              border-left: 3px solid #2563eb;
+              border: 1px solid #bfdbfe;
+              border-left: 3px solid #2563eb;
+            }
+            
+            .info-label {
+              font-size: 9px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+              margin-bottom: 3px;
+              font-weight: 600;
+            }
+            
+            .info-value {
+              font-size: 12px;
+              color: #111827;
+              font-weight: 600;
+              line-height: 1.2;
+            }
+            
+            .info-value-large {
+              font-size: 16px;
+              color: #1e40af;
+              font-weight: 700;
+            }
+            
+            .pricing-box {
+              background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+              border: 2px solid #3b82f6;
+              border-radius: 8px;
+              padding: 12px;
+              margin-top: 8px;
+              box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+            }
+            
+            .pricing-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 5px 0;
+              font-size: 11px;
+            }
+            
+            .pricing-row.total {
+              border-top: 2px solid #3b82f6;
+              margin-top: 6px;
+              padding-top: 8px;
+              font-size: 13px;
+              font-weight: 700;
+              background: white;
+              padding: 10px;
+              border-radius: 5px;
+              margin: 6px -4px 0;
+            }
+            
+            .pricing-row .label {
+              color: #1e40af;
+              font-weight: 500;
+            }
+            
+            .pricing-row .value {
+              color: #1e3a8a;
+              font-weight: 600;
+            }
+            
+            .pricing-row.total .value {
+              color: #1e40af;
+              font-size: 16px;
+            }
+            
+            .refund-notice {
+              background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+              border: 2px solid #10b981;
+              border-radius: 8px;
+              padding: 10px;
+              margin-top: 10px;
+            }
+            
+            .refund-notice h4 {
+              color: #065f46;
+              font-size: 11px;
+              font-weight: 700;
+              margin-bottom: 4px;
+            }
+            
+            .refund-notice p {
+              color: #047857;
+              font-size: 10px;
+              line-height: 1.4;
+            }
+            
+            .patient-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 8px;
+            }
+            
+            .patient-item {
+              background: white;
+              padding: 7px 10px;
+              border-radius: 5px;
+              border: 1px solid #bfdbfe;
+            }
+            
+            .receipt-footer {
+              background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+              padding: 12px 30px;
+              text-align: center;
+              border-top: 2px solid #3b82f6;
+            }
+            
+            .receipt-footer p {
+              color: #1e40af;
+              font-size: 9px;
+              margin: 2px 0;
+            }
+            
+            .footer-logo {
+              font-size: 11px;
+              font-weight: 700;
+              color: #1e40af;
+              margin-bottom: 4px;
+              text-transform: uppercase;
+              letter-spacing: 0.8px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div class="receipt-header">
+              <h1>Appointment Receipt</h1>
+              <div class="appointment-id">ID: ${appointment.appointmentId}</div>
+            </div>
+            
+            <div class="receipt-body">
+              <div class="section">
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                      <span class="status-badge status-${currentStatus.toLowerCase()}">
+                        ${getStatusLabel(currentStatus)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-label">Total Amount</div>
+                    <div class="info-value-large">Rs. ${appointment.total || appointment.amount || 0}</div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-label">Doctor</div>
+                    <div class="info-value">${appointment.doctor}</div>
+                    ${appointment.specialization ? `<div style="font-size: 10px; color: #6b7280; margin-top: 2px;">${appointment.specialization}</div>` : ''}
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-label">Hospital</div>
+                    <div class="info-value">${appointment.hospital || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-label">Date</div>
+                    <div class="info-value">${appointment.date}</div>
+                  </div>
+                  
+                  <div class="info-item">
+                    <div class="info-label">Time</div>
+                    <div class="info-value">${appointment.time || 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+              
+              ${appointment.basePrice ? `
+              <div class="section">
+                <h3 class="section-title">Pricing Breakdown</h3>
+                <div class="pricing-box">
+                  <div class="pricing-row">
+                    <span class="label">Base Price:</span>
+                    <span class="value">Rs. ${appointment.basePrice}</span>
+                  </div>
+                  ${appointment.refundDeposit > 0 ? `
+                  <div class="pricing-row">
+                    <span class="label">Refund Deposit:</span>
+                    <span class="value">Rs. ${appointment.refundDeposit}</span>
+                  </div>
+                  ` : ''}
+                  <div class="pricing-row total">
+                    <span class="label">Total Amount:</span>
+                    <span class="value">Rs. ${appointment.total || appointment.amount || 0}</span>
+                  </div>
+                </div>
+              </div>
+              ` : ''}
+              
+              ${appointment.refundEligible && appointment.refundDeposit > 0 ? `
+              <div class="refund-notice">
+                <h4>✓ Refund Eligibility</h4>
+                <p>${appointment.refundEligible}</p>
+              </div>
+              ` : ''}
+              
+              <div class="section">
+                <h3 class="section-title">Patient Information</h3>
+                <div class="patient-grid">
+                  <div class="patient-item">
+                    <div class="info-label">Patient Name</div>
+                    <div class="info-value">${appointment.patientName || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">Mobile Number</div>
+                    <div class="info-value">${appointment.patientPhone || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value" style="word-break: break-all; font-size: 10px;">${appointment.patientEmail || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">NIC Number</div>
+                    <div class="info-value">${appointment.patientNIC || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">Date of Birth</div>
+                    <div class="info-value">${appointment.patientDOB || 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">Gender</div>
+                    <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : 'N/A'}</div>
+                  </div>
+                  
+                  <div class="patient-item">
+                    <div class="info-label">Age</div>
+                    <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : 'N/A'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="receipt-footer">
+              <div class="footer-logo">Healthcare Appointment System</div>
+              <p>This is an electronically generated receipt</p>
+              <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</p>
+              <p style="margin-top: 12px; font-style: italic;">Thank you for choosing our services</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // New window එකක් open කරලා HTML එක load කරනවා
+    const newWindow = window.open('', '_blank', 'width=800,height=1000');
+    if (!newWindow) {
+      throw new Error('Could not open new window. Please allow pop-ups.');
+    }
+
+    newWindow.document.write(receiptHTML);
+    newWindow.document.close();
+
+    // Window එක load වෙනකන් wait කරනවා
+    await new Promise(resolve => {
+      newWindow.onload = resolve;
+      setTimeout(resolve, 1000);
+    });
+
+    // html2canvas භාවිතා කරලා capture කරනවා
+    const canvas = await html2canvas(newWindow.document.body, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      windowWidth: 794, // A4 width in pixels (210mm)
+      windowHeight: 1123, // A4 height in pixels (297mm)
+    });
+
+    // Window එක close කරනවා
+    newWindow.close();
+
+    // Canvas එක PNG බවට convert කරනවා
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Receipt_${appointment.appointmentId || Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        // Remove loading message
+        document.body.removeChild(loadingMsg);
+        
+        // Success message
+        const successMsg = document.createElement('div');
+        successMsg.textContent = '✓ Receipt downloaded as PNG!';
+        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+        document.body.appendChild(successMsg);
+        setTimeout(() => document.body.removeChild(successMsg), 3000);
+      }
+    }, 'image/png', 1.0);
+
+  } catch (error) {
+    console.error('Download error:', error);
+    alert('Failed to download image. Error: ' + error.message);
+  }
+};
   const downloadAsPdf = () => {
     if (receiptRef.current) {
-      const printWindow = window.open("", "", "width=800,height=600");
+      const printWindow = window.open("", "", "width=900,height=700");
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head>
+              <title>Appointment Receipt - ${appointment.appointmentId}</title>
               <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                .receipt { background: white; padding: 20px; }
+                * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                }
+                
+                @page {
+                  size: A4;
+                  margin: 0;
+                }
+                
+                body {
+                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                  background: white;
+                  padding: 0;
+                  margin: 0;
+                }
+                
+                .receipt-container {
+                  width: 210mm;
+                  height: 297mm;
+                  margin: 0 auto;
+                  background: white;
+                  border: 2px solid #2563eb;
+                  overflow: hidden;
+                  display: flex;
+                  flex-direction: column;
+                  page-break-after: avoid;
+                  page-break-inside: avoid;
+                }
+                
+                .receipt-header {
+                  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+                  color: white;
+                  padding: 20px 30px;
+                  text-align: center;
+                  position: relative;
+                  flex-shrink: 0;
+                }
+                
+                .receipt-header::before {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  height: 3px;
+                  background: linear-gradient(90deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+                }
+                
+                .receipt-header h1 {
+                  font-size: 22px;
+                  font-weight: 700;
+                  margin-bottom: 5px;
+                  letter-spacing: -0.5px;
+                  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+                
+                .receipt-header .appointment-id {
+                  font-size: 12px;
+                  opacity: 0.95;
+                  font-weight: 500;
+                  background: rgba(255, 255, 255, 0.25);
+                  display: inline-block;
+                  padding: 4px 12px;
+                  border-radius: 15px;
+                  margin-top: 4px;
+                  border: 1px solid rgba(255, 255, 255, 0.3);
+                }
+                
+                .receipt-body {
+                  padding: 20px 30px;
+                  flex-grow: 1;
+                  overflow: hidden;
+                }
+                
+                .status-badge {
+                  display: inline-block;
+                  padding: 4px 12px;
+                  border-radius: 15px;
+                  font-weight: 600;
+                  font-size: 10px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.3px;
+                }
+                
+                .status-confirmed {
+                  background: #d1fae5;
+                  color: #065f46;
+                }
+                
+                .status-cancelled {
+                  background: #fee2e2;
+                  color: #991b1b;
+                }
+                
+                .status-pending {
+                  background: #fef3c7;
+                  color: #92400e;
+                }
+                
+                .status-completed {
+                  background: #dbeafe;
+                  color: #1e40af;
+                }
+                
+                .section {
+                  margin-bottom: 16px;
+                  page-break-inside: avoid;
+                }
+                
+                .section-title {
+                  font-size: 13px;
+                  font-weight: 700;
+                  color: #1e40af;
+                  margin-bottom: 8px;
+                  padding-bottom: 4px;
+                  border-bottom: 2px solid #3b82f6;
+                  display: inline-block;
+                  padding-right: 15px;
+                }
+                
+                .info-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 10px;
+                  margin-bottom: 12px;
+                }
+                
+                .info-item {
+                  background: #eff6ff;
+                  padding: 8px 10px;
+                  border-radius: 5px;
+                  border-left: 3px solid #2563eb;
+                  border: 1px solid #bfdbfe;
+                  border-left: 3px solid #2563eb;
+                }
+                
+                .info-label {
+                  font-size: 9px;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.3px;
+                  margin-bottom: 3px;
+                  font-weight: 600;
+                }
+                
+                .info-value {
+                  font-size: 12px;
+                  color: #111827;
+                  font-weight: 600;
+                  line-height: 1.2;
+                }
+                
+                .info-value-large {
+                  font-size: 16px;
+                  color: #1e40af;
+                  font-weight: 700;
+                }
+                
+                .pricing-box {
+                  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+                  border: 2px solid #3b82f6;
+                  border-radius: 8px;
+                  padding: 12px;
+                  margin-top: 8px;
+                  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+                  page-break-inside: avoid;
+                }
+                
+                .pricing-row {
+                  display: flex;
+                  justify-content: space-between;
+                  padding: 5px 0;
+                  font-size: 11px;
+                }
+                
+                .pricing-row.total {
+                  border-top: 2px solid #3b82f6;
+                  margin-top: 6px;
+                  padding-top: 8px;
+                  font-size: 13px;
+                  font-weight: 700;
+                  background: white;
+                  padding: 10px;
+                  border-radius: 5px;
+                  margin: 6px -4px 0;
+                }
+                
+                .pricing-row .label {
+                  color: #1e40af;
+                  font-weight: 500;
+                }
+                
+                .pricing-row .value {
+                  color: #1e3a8a;
+                  font-weight: 600;
+                }
+                
+                .pricing-row.total .value {
+                  color: #1e40af;
+                  font-size: 16px;
+                }
+                
+                .refund-notice {
+                  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+                  border: 2px solid #10b981;
+                  border-radius: 8px;
+                  padding: 10px;
+                  margin-top: 10px;
+                  page-break-inside: avoid;
+                }
+                
+                .refund-notice h4 {
+                  color: #065f46;
+                  font-size: 11px;
+                  font-weight: 700;
+                  margin-bottom: 4px;
+                }
+                
+                .refund-notice p {
+                  color: #047857;
+                  font-size: 10px;
+                  line-height: 1.4;
+                }
+                
+                .patient-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 8px;
+                }
+                
+                .patient-item {
+                  background: white;
+                  padding: 7px 10px;
+                  border-radius: 5px;
+                  border: 1px solid #bfdbfe;
+                }
+                
+                .receipt-footer {
+                  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+                  padding: 12px 30px;
+                  text-align: center;
+                  border-top: 2px solid #3b82f6;
+                  flex-shrink: 0;
+                }
+                
+                .receipt-footer p {
+                  color: #1e40af;
+                  font-size: 9px;
+                  margin: 2px 0;
+                }
+                
+                .footer-logo {
+                  font-size: 11px;
+                  font-weight: 700;
+                  color: #1e40af;
+                  margin-bottom: 4px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.8px;
+                }
+                
+                @media print {
+                  body {
+                    background: white;
+                    padding: 0;
+                    margin: 0;
+                  }
+                  
+                  .receipt-container {
+                    box-shadow: none;
+                    border: none;
+                    page-break-after: avoid;
+                    page-break-inside: avoid;
+                  }
+                  
+                  .section {
+                    page-break-inside: avoid;
+                  }
+                  
+                  .pricing-box, .refund-notice {
+                    page-break-inside: avoid;
+                  }
+                }
               </style>
             </head>
             <body>
-              ${receiptRef.current.innerHTML}
+              <div class="receipt-container">
+                <div class="receipt-header">
+                  <h1>Appointment Receipt</h1>
+                  <div class="appointment-id">ID: ${appointment.appointmentId}</div>
+                </div>
+                
+                <div class="receipt-body">
+                  <div class="section">
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                          <span class="status-badge status-${currentStatus.toLowerCase()}">
+                            ${getStatusLabel(currentStatus)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div class="info-item">
+                        <div class="info-label">Total Amount</div>
+                        <div class="info-value-large">Rs. ${appointment.total || appointment.amount || 0}</div>
+                      </div>
+                      
+                      <div class="info-item">
+                        <div class="info-label">Doctor</div>
+                        <div class="info-value">${appointment.doctor}</div>
+                        ${appointment.specialization ? `<div style="font-size: 13px; color: #6b7280; margin-top: 4px;">${appointment.specialization}</div>` : ''}
+                      </div>
+                      
+                      <div class="info-item">
+                        <div class="info-label">Hospital</div>
+                        <div class="info-value">${appointment.hospital || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="info-item">
+                        <div class="info-label">Date</div>
+                        <div class="info-value">${appointment.date}</div>
+                      </div>
+                      
+                      <div class="info-item">
+                        <div class="info-label">Time</div>
+                        <div class="info-value">${appointment.time || 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  ${appointment.basePrice ? `
+                  <div class="section">
+                    <h3 class="section-title">Pricing Breakdown</h3>
+                    <div class="pricing-box">
+                      <div class="pricing-row">
+                        <span class="label">Base Price:</span>
+                        <span class="value">Rs. ${appointment.basePrice}</span>
+                      </div>
+                      ${appointment.refundDeposit > 0 ? `
+                      <div class="pricing-row">
+                        <span class="label">Refund Deposit:</span>
+                        <span class="value">Rs. ${appointment.refundDeposit}</span>
+                      </div>
+                      ` : ''}
+                      <div class="pricing-row total">
+                        <span class="label">Total Amount:</span>
+                        <span class="value">Rs. ${appointment.total || appointment.amount || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                  ` : ''}
+                  
+                  ${appointment.refundEligible && appointment.refundDeposit > 0 ? `
+                  <div class="refund-notice">
+                    <h4>✓ Refund Eligibility</h4>
+                    <p>${appointment.refundEligible}</p>
+                  </div>
+                  ` : ''}
+                  
+                  <div class="section">
+                    <h3 class="section-title">Patient Information</h3>
+                    <div class="patient-grid">
+                      <div class="patient-item">
+                        <div class="info-label">Patient Name</div>
+                        <div class="info-value">${appointment.patientName || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">Mobile Number</div>
+                        <div class="info-value">${appointment.patientPhone || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value" style="word-break: break-all;">${appointment.patientEmail || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">NIC Number</div>
+                        <div class="info-value">${appointment.patientNIC || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">Date of Birth</div>
+                        <div class="info-value">${appointment.patientDOB || 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">Gender</div>
+                        <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : 'N/A'}</div>
+                      </div>
+                      
+                      <div class="patient-item">
+                        <div class="info-label">Age</div>
+                        <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="receipt-footer">
+                  <div class="footer-logo">Healthcare Appointment System</div>
+                  <p>This is an electronically generated receipt</p>
+                  <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                  <p style="margin-top: 12px; font-style: italic;">Thank you for choosing our services</p>
+                </div>
+              </div>
             </body>
           </html>
         `);
         printWindow.document.close();
         setTimeout(() => {
           printWindow.print();
-        }, 100);
+        }, 250);
       }
     }
   };
-
   const hasRefundDeposit =
     appointment.refundDeposit && appointment.refundDeposit > 0;
 

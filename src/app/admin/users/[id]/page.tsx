@@ -61,7 +61,7 @@ export default function AgentPage({ params }: AgentPageProps) {
         const agentName = agent.fullName || agent.username;
         const fetchedAppointments = await fetchAppointmentsByAgent(
           id,
-          agentName
+          // agentName
         );
         setAppointments(fetchedAppointments);
       } catch (err) {

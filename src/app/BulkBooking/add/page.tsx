@@ -10,7 +10,7 @@ import BulkBookingContainer from "../../../components/BulkBooking/BulkBookingCon
 type PopupType = "success" | "error" | null;
 
 export default function AddBulkBookingPage() {
-  const [selectedAccount, setSelectedAccount] = useState("Account 1");
+ const [selectedAccount, setSelectedAccount] = useState<string>("default");
   const [cart, setCart] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [popup, setPopup] = useState<PopupType>(null);
@@ -18,87 +18,92 @@ export default function AddBulkBookingPage() {
   const handleAccountChange = (account: string) => setSelectedAccount(account);
 
   const handlePlaceBookings = async () => {
-    if (cart.length === 0) {
-      alert("Cart is empty!");
-      return;
-    }
+  if (cart.length === 0) {
+    alert("Cart is empty!");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // Submit each appointment to the backend
-      const bookingPromises = cart.map(async (item) => {
-        const appointmentData = {
-          doctorId: item.selectedDoctor.id,
-          availabilityId: null,
+  try {
+    // Submit each appointment to the backend
+    const bookingPromises = cart.map(async (item) => {
+      const appointmentData = {
+        doctorId: item.selectedDoctor.id,
+        availabilityId: null,
 
-          // ❗ FIX FIELD NAMES
-          name: item.patientName,
-          mobile: item.patientMobile,
-          email: item.patientEmail || null,
+        // ❗ FIX FIELD NAMES
+        name: item.patientName,
+        mobile: item.patientMobile,
+        email: item.patientEmail || null,
 
-          nic: item.patientNIC,
-          dob: item.patientDOB,
-          gender: item.patientGender,
-          age: item.patientAge,
+        nic: item.patientNIC,
+        dob: item.patientDOB,
+        gender: item.patientGender,
+        age: item.patientAge,
 
-          sltPhone: item.patientMobile,
-          notes: `NIC: ${item.patientNIC}, DOB: ${item.patientDOB}, Gender: ${item.patientGender}, Age: ${item.patientAge}`,
+        sltPhone: item.patientMobile,
+        notes: `NIC: ${item.patientNIC}, DOB: ${item.patientDOB}, Gender: ${item.patientGender}, Age: ${item.patientAge}`,
 
-          appointmentDate: item.appointmentDate,
-          appointmentTime: item.selectedTime,
+        appointmentDate: item.appointmentDate,
+        appointmentTime: item.selectedTime,
 
-          paymentMethod: "bill",
-          totalAmount: item.totalPrice,
+        paymentMethod: "bill",
+        totalAmount: item.totalPrice,
 
-          isMember: false,
-          sendSms: true,
-          sendEmail: false,
-          sendEmail: Boolean(item.patientEmail),
-          agreeRefund: item.refundDeposit,
-        };
+        isMember: false,
+        sendSms: true,
+        // ❌ Remove this line:
+        // sendEmail: false,
+        // ✅ Keep only this line:
+        sendEmail: Boolean(item.patientEmail),
+        agreeRefund: item.refundDeposit,
+      };
 
-        const response = await fetch("/api/appointments/create", {
-          // ✅ CORRECT
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(appointmentData),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to book appointment");
-        }
-
-        return await response.json();
+      const response = await fetch("/api/appointments/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(appointmentData),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to book appointment");
+      }
 
-      // Wait for all bookings to complete
-      await Promise.all(bookingPromises);
+      return await response.json();
+    });
 
-      setPopup("success");
-      // Auto-close success popup after 2 seconds and clear cart
-      setTimeout(() => {
-        setPopup(null);
-        setCart([]);
-        setIsLoading(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Error placing bookings:", error);
-      setPopup("error");
+    // Wait for all bookings to complete
+    await Promise.all(bookingPromises);
+
+    setPopup("success");
+    // Auto-close success popup after 2 seconds and clear cart
+    setTimeout(() => {
+      setPopup(null);
+      setCart([]);
       setIsLoading(false);
-      // Auto-close error popup after 3 seconds
-      setTimeout(() => setPopup(null), 3000);
-    }
-  };
+    }, 2000);
+  } catch (error) {
+    console.error("Error placing bookings:", error);
+    setPopup("error");
+    setIsLoading(false);
+    // Auto-close error popup after 3 seconds
+    setTimeout(() => setPopup(null), 3000);
+  }
+};
 
   return (
     <div className="flex h-screen bg-[#eaeaea]">
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <Header />
+      <Header
+  selectedAccount={selectedAccount}
+  onAccountChange={setSelectedAccount}
+/>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">

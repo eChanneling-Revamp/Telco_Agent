@@ -1,13 +1,6 @@
 import React, { useState } from "react";
 import { CheckCircle, Loader, AlertCircle } from "lucide-react";
-
-type Doctor = {
-  id: number;
-  name: string;
-  specialty: string;
-  hospital: string;
-  consultation_fee: number;
-};
+import { Doctor } from "@/types/appointment";
 
 interface AppointmentSummaryProps {
   doctor: Doctor;
@@ -154,7 +147,7 @@ export default function AppointmentSummary({
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-gray-600">Base Price</span>
               <span className="font-medium text-gray-900">
-                Rs. {doctor.consultation_fee}
+                Rs. {doctor.consultationFee}
               </span>
             </div>
             {patientData.agreeRefund && (

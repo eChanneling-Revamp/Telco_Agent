@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react"; // ✅ Add this import
 import {
   BarChart,
   Bar,
@@ -18,7 +19,7 @@ interface ChartData {
 }
 
 interface ChartCardProps {
-  title: string;
+  title: ReactNode; // ✅ Changed from string to ReactNode
   type: "bar" | "line";
   data: ChartData[];
   xKey: string;
@@ -60,7 +61,7 @@ export default function ChartCard({
     );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 ml-4 ">
+    <div className="bg-white rounded-xl shadow-sm p-6 ml-4">
       <h3 className="mb-4 text-gray-500">{title}</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">

@@ -23,17 +23,26 @@ export async function POST(req: NextRequest) {
     });
 
     // Get status badge styling
-    const getStatusBadge = (status: string) => {
-      const normalizedStatus = status?.toLowerCase() || "confirmed";
-      const statusStyles = {
-        confirmed: { bg: "#10b981", text: "Confirmed" },
-        cancelled: { bg: "#ef4444", text: "Cancelled" },
-        pending: { bg: "#f59e0b", text: "Pending" },
-        completed: { bg: "#3b82f6", text: "Completed" },
-      };
-      const style = statusStyles[normalizedStatus] || statusStyles.confirmed;
-      return `<span style="display: inline-block; background: ${style.bg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${style.text}</span>`;
-    };
+  const getStatusBadge = (status: string) => {
+  const normalizedStatus = status?.toLowerCase() as
+    | "confirmed"
+    | "cancelled"
+    | "pending"
+    | "completed";
+
+  const statusStyles = {
+    confirmed: { bg: "#10b981", text: "Confirmed" },
+    cancelled: { bg: "#ef4444", text: "Cancelled" },
+    pending: { bg: "#f59e0b", text: "Pending" },
+    completed: { bg: "#3b82f6", text: "Completed" },
+  };
+
+  const style =
+    statusStyles[normalizedStatus] || statusStyles.confirmed;
+
+  return `<span style="display: inline-block; background: ${style.bg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${style.text}</span>`;
+};
+
 
     // Email content
     const mailOptions = {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/dashboard/Header";
 import SideBar from "@/components/dashboard/SideBar";
@@ -17,10 +17,11 @@ import {
 } from "lucide-react";
 import { dailyBookings, weeklyTrends } from "@/lib/data";
 
-const DashboardPage = () => {
+// Separate the component that uses useSearchParams
+function DashboardContent() {
   const searchParams = useSearchParams();
-  // const [selectedAccount, setSelectedAccount] = useState("Account 1");
-  // const [userEmail, setUserEmail] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState<string>("default");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const email = searchParams.get("email");
@@ -30,28 +31,18 @@ const DashboardPage = () => {
   }, [searchParams]);
 
   return (
-    <div
-      className="flex h-screen bg-[#eaeaea]"
-      // style={{
-      //   backgroundImage: `url('/assets/bg.png')`,
-      //   backgroundSize: "cover",
-      //   backgroundPosition: "center",
-      //   backgroundRepeat: "no-repeat",
-      // }}
-    >
+    <div className="flex h-screen bg-[#eaeaea]">
       <SideBar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
-        // selectedAccount={selectedAccount}
-        // onAccountChange={setSelectedAccount}
-        // userEmail={userEmail}
+          selectedAccount={selectedAccount}
+          onAccountChange={setSelectedAccount}
         />
-        {/* <h3 className="text-sm text-white p-2">Dashboard</h3> */}
 
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex items-center gap-2 mb-6  text-black">
-            <span className="text-sm ">Dashboard</span>
+          <div className="flex items-center gap-2 mb-6 text-black">
+            <span className="text-sm">Dashboard</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard
@@ -71,7 +62,7 @@ const DashboardPage = () => {
               change="3% vs last week"
               icon={
                 <div className="p-2 rounded-full bg-red-100">
-                  <CircleX size={20} className="text-red-400 " />
+                  <CircleX size={20} className="text-red-400" />
                 </div>
               }
               trend="down"
@@ -82,7 +73,7 @@ const DashboardPage = () => {
               change="+0.5% vs last week"
               icon={
                 <div className="p-2 rounded-full bg-orange-100">
-                  <RefreshCcw size={20} className="text-orange-400 " />
+                  <RefreshCcw size={20} className="text-orange-400" />
                 </div>
               }
               trend="up"
@@ -125,6 +116,24 @@ const DashboardPage = () => {
         </main>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense wrapper
+const DashboardPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-[#eaeaea]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 };
 

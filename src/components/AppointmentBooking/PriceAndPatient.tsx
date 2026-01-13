@@ -1,55 +1,73 @@
 "use client";
 
-import React, { useState } from 'react';
-
-type Doctor = {
-  id: number;
-  name: string;
-  specialty: string;
-  consultation_fee: number;
-};
+import React, { useState } from "react";
+import { Doctor, PatientData } from "@/types/appointment";
 
 interface PriceAndPatientProps {
   doctor: Doctor;
   date: string;
   time: string;
-  onNext: (patientData: any) => void;
+  onNext: (patientData: PatientData) => void;
   onBack: () => void;
-  initialData?: any;
+  initialData?: PatientData | null;
 }
 
-export default function PriceAndPatient({ doctor, date, time, onNext, onBack, initialData }: PriceAndPatientProps) {
+export default function PriceAndPatient({
+  doctor,
+  date,
+  time,
+  onNext,
+  onBack,
+  initialData,
+}: PriceAndPatientProps) {
   const [patientName, setPatientName] = useState(initialData?.name || "");
   const [patientNIC, setPatientNIC] = useState(initialData?.nic || "");
   const [patientMobile, setPatientMobile] = useState(initialData?.mobile || "");
   const [patientEmail, setPatientEmail] = useState(initialData?.email || "");
   const [patientDOB, setPatientDOB] = useState(initialData?.dob || "");
   const [patientGender, setPatientGender] = useState(initialData?.gender || "");
-  const [patientAge, setPatientAge] = useState(initialData?.age || "");
-  const [agreeRefund, setAgreeRefund] = useState(initialData?.agreeRefund || false);
+  const [patientAge, setPatientAge] = useState(initialData?.age?.toString() || "");
+  const [agreeRefund, setAgreeRefund] = useState(
+    initialData?.agreeRefund || false
+  );
 
-  const basePrice = Number(doctor.consultation_fee);
+  // ✅ FIX: Ensure consultationFee is properly converted to number
+  const basePrice = Number(doctor.consultationFee) || 3000;
   const refund = 250;
   const totalPrice = agreeRefund ? basePrice + refund : basePrice;
 
   const handleContinue = () => {
-    onNext({
-      name: patientName,
-      nic: patientNIC,
-      mobile: patientMobile,
-      email: patientEmail,
+    const patientData: PatientData = {
+      name: patientName.trim(),
+      nic: patientNIC.trim(),
+      mobile: patientMobile.trim(),
+      email: patientEmail.trim(),
       dob: patientDOB,
       gender: patientGender,
-      age: patientAge,
+      age: parseInt(patientAge, 10),
       agreeRefund,
-      totalPrice
-    });
+      totalPrice: Number(totalPrice),
+    };
+
+    console.log("📋 Patient data being sent:", patientData);
+    onNext(patientData);
   };
+
+  const isFormValid = 
+    patientName.trim() !== "" &&
+    patientNIC.trim() !== "" &&
+    patientMobile.trim() !== "" &&
+    patientDOB !== "" &&
+    patientGender !== "" &&
+    patientAge !== "" &&
+    !isNaN(parseInt(patientAge, 10));
 
   return (
     <div className="mx-auto p-6 px-2 py-6 mb-2">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Place an Appointment</h1>
-      
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        Place an Appointment
+      </h1>
+
       {/* Progress Bar */}
       <div className="flex items-center gap-2 mb-8">
         <div className="flex-1 h-2 bg-blue-900 rounded"></div>
@@ -59,7 +77,9 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Price & Refund Option</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          Price & Refund Option
+        </h2>
 
         {/* Selected Doctor Info */}
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
@@ -92,10 +112,12 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
             />
             <div>
               <p className="font-medium text-gray-900">
-                Customer agrees to pay additional Rs. 250 for full refund eligibility
+                Customer agrees to pay additional Rs. 250 for full refund
+                eligibility
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                This amount makes the appointment fully refund-able if cancelled.
+                This amount makes the appointment fully refund-able if
+                cancelled.
               </p>
             </div>
           </label>
@@ -105,18 +127,23 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
         <div className="bg-teal-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-900">Total Price</span>
-            <span className="text-2xl font-bold text-teal-600">Rs. {totalPrice}</span>
+            <span className="text-2xl font-bold text-teal-600">
+              Rs. {totalPrice}
+            </span>
           </div>
           {agreeRefund && (
             <p className="text-xs text-gray-600 mt-2">
-              Base Fee: Rs. {basePrice} + Refund Deposit: Rs. {refund} = Total: Rs. {totalPrice}
+              Base Fee: Rs. {basePrice} + Refund Deposit: Rs. {refund} = Total:
+              Rs. {totalPrice}
             </p>
           )}
         </div>
 
         {/* Patient Details Section */}
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-8">Patient Details</h3>
-        
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-8">
+          Patient Details
+        </h3>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 text-black">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -126,7 +153,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
               type="text"
               value={patientName}
               onChange={(e) => setPatientName(e.target.value)}
-              placeholder="Priyani"
+              placeholder="Enter patient name"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
             />
           </div>
@@ -159,7 +186,8 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Patient Email <span className="text-gray-400 text-xs">(Optional)</span>
+              Patient Email{" "}
+              <span className="text-gray-400 text-xs">(Optional)</span>
             </label>
             <input
               type="email"
@@ -178,6 +206,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
               type="date"
               value={patientDOB}
               onChange={(e) => setPatientDOB(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-800"
             />
           </div>
@@ -214,6 +243,15 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
           </div>
         </div>
 
+        {/* Validation Error Message */}
+        {!isFormValid && patientAge !== "" && isNaN(parseInt(patientAge, 10)) && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">
+              Please enter a valid age (number only)
+            </p>
+          </div>
+        )}
+
         {/* Navigation Buttons */}
         <div className="flex gap-4">
           <button
@@ -224,7 +262,7 @@ export default function PriceAndPatient({ doctor, date, time, onNext, onBack, in
           </button>
           <button
             onClick={handleContinue}
-            disabled={!patientName || !patientNIC || !patientMobile || !patientDOB || !patientGender || !patientAge}
+            disabled={!isFormValid}
             className="flex-1 bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Review Appointment

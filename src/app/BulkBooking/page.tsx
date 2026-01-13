@@ -7,7 +7,7 @@ import Header from "../../components/dashboard/Header";
 import BulkBookingContainer from "../../components/BulkBooking/BulkBookingContainer";
 
 export default function BulkBookingPage() {
-  const [selectedAccount, setSelectedAccount] = useState("Account 1");
+  const [selectedAccount, setSelectedAccount] = useState<string>("default");
 
   const handleAccountChange = (account: string) => {
     setSelectedAccount(account);
@@ -28,7 +28,10 @@ export default function BulkBookingPage() {
       {/* Right Section */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header */}
-        <Header />
+      <Header
+  selectedAccount={selectedAccount}
+  onAccountChange={setSelectedAccount}
+/>
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">

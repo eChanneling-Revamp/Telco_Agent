@@ -28,6 +28,7 @@ interface AllAppointmentsListProps {
   statuses: string[];
   onSearchChange: (query: string) => void;
   onFiltersChange: (filters: Partial<FilterState>) => void;
+  loading: boolean;
 }
 
 export const AllAppointmentsList: React.FC<AllAppointmentsListProps> = ({
@@ -39,6 +40,7 @@ export const AllAppointmentsList: React.FC<AllAppointmentsListProps> = ({
   statuses,
   onSearchChange,
   onFiltersChange,
+  loading,
 }) => {
   const [selectedAppointment, setSelectedAppointment] =
     React.useState<Appointment | null>(null);
@@ -58,47 +60,56 @@ export const AllAppointmentsList: React.FC<AllAppointmentsListProps> = ({
         onFilterChange={onFiltersChange}
       />
 
-      <div className="space-y-4">
-        {appointments.map((appointment) => (
-          <AllAppointmentCard
-            key={appointment.id}
-            appointment={appointment}
-            onViewDetails={handleViewDetails}
-          />
-        ))}
+      {loading && (
+        <div className="flex justify-center py-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-800"></div>
+        </div>
+      )}
 
-        {appointments.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No appointments found matching your criteria.
-          </div>
-        )}
-      </div>
+      {!loading && (
+        <div className="space-y-4">
+          {appointments.map((appointment) => (
+            <AllAppointmentCard
+              key={appointment.id}
+              appointment={appointment}
+              onViewDetails={handleViewDetails}
+            />
+          ))}
 
+          {appointments.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              No appointments found matching your criteria.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ✅ Fixed: Map Appointment fields to modal's expected structure */}
       <AppointmentDetailsModal
-        isOpen={selectedAppointment !== null}
-        onClose={() => setSelectedAppointment(null)}
-        appointment={
-          selectedAppointment
-            ? {
-                id: Number(selectedAppointment.id),
-                appointmentId: selectedAppointment.appointmentId,
-                status: selectedAppointment.status,
-                doctor: selectedAppointment.doctor,
-                specialization: selectedAppointment.doctorSpecialty,
-                hospital: selectedAppointment.hospital,
-                date: selectedAppointment.dateTime,
-                time: selectedAppointment.time,
-                amount: selectedAppointment.amount,
-                patientName: selectedAppointment.patientName,
-                patientPhone: selectedAppointment.phone,
-                basePrice: selectedAppointment.basePrice,
-                refundDeposit: selectedAppointment.refundDeposit,
-                total: selectedAppointment.amount,
-                refundEligible: selectedAppointment.refundStatus,
-              }
-            : null
-        }
-      />
+  isOpen={selectedAppointment !== null}
+  onClose={() => setSelectedAppointment(null)}
+  appointment={
+    selectedAppointment
+      ? ({
+          id: Number(selectedAppointment.id),
+          appointmentId: selectedAppointment.appointmentId,
+          status: selectedAppointment.status,
+          doctor: selectedAppointment.doctor,
+          specialization: selectedAppointment.doctorSpecialty,
+          hospital: selectedAppointment.hospital,
+          date: selectedAppointment.dateTime,
+          time: selectedAppointment.time,
+          amount: selectedAppointment.amount,
+          patientName: selectedAppointment.patientName,
+          patientPhone: selectedAppointment.phone,
+          basePrice: selectedAppointment.basePrice,
+          refundDeposit: selectedAppointment.refundDeposit,
+          total: selectedAppointment.amount,
+          refundEligible: selectedAppointment.refundStatus,
+        } as any) // ✅ Add type assertion
+      : null
+  }
+/>
     </>
   );
 };

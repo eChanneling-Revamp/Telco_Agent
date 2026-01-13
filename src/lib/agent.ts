@@ -1,4 +1,20 @@
+// src/lib/agent.ts
+
 import { Agent } from "@/types/agent";
+
+// Define proper types for API responses
+interface UserApiResponse {
+  id: number;
+  name?: string;
+  email: string;
+  phone?: string;
+  is_suspended: boolean;
+  total_appointments: string | number;
+}
+
+interface UsersApiData {
+  users: UserApiResponse[];
+}
 
 // Fallback mock agents for error scenarios
 export const mockAgents: Agent[] = [
@@ -14,6 +30,19 @@ export const mockAgents: Agent[] = [
     totalAppointments: 156,
   },
 ];
+
+// Transform API user data to Agent format
+const transformUserToAgent = (user: UserApiResponse): Agent => ({
+  id: String(user.id),
+  fullName: user.name || user.email.split("@")[0],
+  username: user.email.split("@")[0],
+  email: user.email,
+  phone: user.phone || "N/A",
+  accessLevel: "Full Access",
+  status: user.is_suspended ? "Suspended" : "Active",
+  joinDate: new Date().toISOString().split("T")[0],
+  totalAppointments: parseInt(String(user.total_appointments), 10) || 0,
+});
 
 // Fetch agents from backend API
 export const fetchAgents = async (): Promise<Agent[]> => {
@@ -31,20 +60,10 @@ export const fetchAgents = async (): Promise<Agent[]> => {
       return mockAgents;
     }
 
-    const data = await response.json();
+    const data: UsersApiData = await response.json();
 
     // Transform backend response to Agent format
-    return (data.users || []).map((user: any) => ({
-      id: String(user.id),
-      fullName: user.name || user.email.split("@")[0],
-      username: user.email.split("@")[0],
-      email: user.email,
-      phone: user.phone || "N/A",
-      accessLevel: "Full Access",
-      status: user.is_suspended ? "Suspended" : "Active",
-      joinDate: new Date().toISOString().split("T")[0],
-      totalAppointments: parseInt(user.total_appointments, 10) || 0,
-    }));
+    return (data.users || []).map(transformUserToAgent);
   } catch (error) {
     console.error("Error fetching agents:", error);
     return mockAgents;
@@ -69,22 +88,12 @@ export const fetchAgentById = async (
       return undefined;
     }
 
-    const data = await response.json();
-    const user = (data.users || []).find((u: any) => String(u.id) === id);
+    const data: UsersApiData = await response.json();
+    const user = (data.users || []).find((u) => String(u.id) === id);
 
     if (!user) return undefined;
 
-    return {
-      id: String(user.id),
-      fullName: user.name || user.email.split("@")[0],
-      username: user.email.split("@")[0],
-      email: user.email,
-      phone: user.phone || "N/A",
-      accessLevel: "Full Access",
-      status: user.is_suspended ? "Suspended" : "Active",
-      joinDate: new Date().toISOString().split("T")[0],
-      totalAppointments: parseInt(user.total_appointments, 10) || 0,
-    };
+    return transformUserToAgent(user);
   } catch (error) {
     console.error("Error fetching agent:", error);
     return undefined;

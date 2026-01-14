@@ -992,12 +992,13 @@ const downloadAsImage = async () => {
                   </div>
                   ` : ''}
                   
-                  ${appointment.refundEligible && appointment.refundDeposit > 0 ? `
-                  <div class="refund-notice">
-                    <h4>✓ Refund Eligibility</h4>
-                    <p>${appointment.refundEligible}</p>
-                  </div>
-                  ` : ''}
+                  ${appointment.refundEligible && (appointment.refundDeposit ?? 0) > 0 ? `
+  <div class="refund-notice">
+    <h4>✓ Refund Eligibility</h4>
+    <p>${appointment.refundEligible}</p>
+  </div>
+` : ''}
+
                   
                   <div class="section">
                     <h3 class="section-title">Patient Information</h3>

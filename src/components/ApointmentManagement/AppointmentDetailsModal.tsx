@@ -977,12 +977,13 @@ const downloadAsImage = async () => {
                         <span class="label">Base Price:</span>
                         <span class="value">Rs. ${appointment.basePrice}</span>
                       </div>
-                      ${appointment.refundDeposit > 0 ? `
-                      <div class="pricing-row">
-                        <span class="label">Refund Deposit:</span>
-                        <span class="value">Rs. ${appointment.refundDeposit}</span>
-                      </div>
-                      ` : ''}
+                      ${(appointment.refundDeposit ?? 0) > 0 ? `
+  <div class="pricing-row">
+    <span class="label">Refund Deposit:</span>
+    <span class="value">Rs. ${appointment.refundDeposit}</span>
+  </div>
+` : ''}
+
                       <div class="pricing-row total">
                         <span class="label">Total Amount:</span>
                         <span class="value">Rs. ${appointment.total || appointment.amount || 0}</span>

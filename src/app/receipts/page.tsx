@@ -3,18 +3,39 @@ import React, { useState, useEffect, useMemo } from "react";
 
 import SearchFilters from "@/components/receipts/SearchFilters";
 import ReceiptsTable from "@/components/receipts/ReceiptsTable";
-import receipts from "@/lib/receipts/data";
 import Pagination from "@/components/receipts/Pagination";
 import SideBar from "@/components/dashboard/SideBar";
 import Header from "@/components/dashboard/Header";
 
 const ReceiptPage = () => {
+  const [selectedAccount, setSelectedAccount] = useState<string>("default");
+  const [receipts, setReceipts] = useState<any[]>([]); // ✅ Add state for receipts
+  const [loading, setLoading] = useState(true); // ✅ Add loading state
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const receiptsPerPage = 8;
+
+  // ✅ Fetch receipts on mount
+  useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const response = await fetch("/api/receipts"); // Adjust API endpoint
+        const data = await response.json();
+        setReceipts(data.receipts || []);
+      } catch (error) {
+        console.error("Error fetching receipts:", error);
+        setReceipts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReceipts();
+  }, []);
+
   const filteredReceipts = useMemo(() => {
     return receipts.filter((receipt) => {
       const matchesSearch =
@@ -59,20 +80,27 @@ const ReceiptPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  // ✅ Show loading state
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-[#eaeaea]">
+        <SideBar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-800"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-   <div
-      className="flex h-screen bg-[#eaeaea]"
-      // style={{
-      //   backgroundImage: `url('/assets/bg.png')`,
-      //   backgroundSize: "cover",
-      //   backgroundPosition: "center",
-      //   backgroundRepeat: "no-repeat",
-      // }}
-    >
+    <div className="flex h-screen bg-[#eaeaea]">
       <SideBar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <div className=" flex-1 flex flex-col overflow-hidden p-6">
+        <Header
+          selectedAccount={selectedAccount}
+          onAccountChange={setSelectedAccount}
+        />
+        <div className="flex-1 flex flex-col overflow-hidden p-6">
           <div className="flex items-center gap-2 mb-6 text-black">
             <span className="text-sm opacity-70">Dashboard</span>
             <span className="opacity-70">›</span>

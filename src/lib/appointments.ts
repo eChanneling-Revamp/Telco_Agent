@@ -1,4 +1,31 @@
+// src/lib/appointments.ts
+
 import { Appointment } from "@/types/appointment";
+import { getAgentById } from "@/lib/agent";
+
+// Define proper types for filters and API response
+interface AppointmentFilters {
+  agent?: string;
+  date?: string;
+  hospital?: string;
+  refundStatus?: string;
+}
+
+interface AppointmentRowData {
+  id: number;
+  patient_name: string;
+  patient_phone: string;
+  user_id: number;
+  booked_by_name?: string;
+  doctor_name: string;
+  specialty: string;
+  hospital: string;
+  appointment_date: string;
+  appointment_time: string;
+  total_amount: string;
+  refund_eligible: boolean;
+  status: string;
+}
 
 export const mockAppointments: Appointment[] = [
   {
@@ -68,8 +95,6 @@ export const getAppointmentById = (id: string): Appointment | undefined => {
   return mockAppointments.find((apt) => apt.id === id);
 };
 
-import { getAgentById } from "@/lib/agent";
-
 export const getAppointmentsByAgentId = (agentId: string): Appointment[] => {
   const agent = getAgentById(agentId);
   const username = agent?.username;
@@ -92,12 +117,7 @@ export const searchAppointments = (query: string): Appointment[] => {
 
 export const filterAppointments = (
   appointments: Appointment[],
-  filters: {
-    agent?: string;
-    date?: string;
-    hospital?: string;
-    refundStatus?: string;
-  }
+  filters: AppointmentFilters
 ): Appointment[] => {
   let filtered = [...appointments];
 
@@ -122,18 +142,19 @@ export const filterAppointments = (
   return filtered;
 };
 
-
-export const fetchAllAppointments = async (filters: any = {}): Promise<Appointment[]> => {
+export const fetchAllAppointments = async (
+  filters: AppointmentFilters = {}
+): Promise<Appointment[]> => {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
-    if (value && value !== 'all') params.append(key, value as string);
+    if (value && value !== 'all') params.append(key, value);
   });
 
   const res = await fetch(`/api/admin/appointments?${params.toString()}`);
   if (!res.ok) throw new Error("Failed to fetch appointments");
   const data = await res.json();
 
-  return data.appointments.map((row: any) => ({
+  return data.appointments.map((row: AppointmentRowData) => ({
     id: String(row.id),
     appointmentId: `APT${String(row.id).padStart(4, "0")}`,
     patientName: row.patient_name,
@@ -153,4 +174,3 @@ export const fetchAllAppointments = async (filters: any = {}): Promise<Appointme
     refundDeposit: row.refund_eligible ? 250 : 0,
   }));
 };
-

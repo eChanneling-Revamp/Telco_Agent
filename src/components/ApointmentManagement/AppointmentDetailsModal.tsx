@@ -55,95 +55,85 @@ export default function AppointmentDetailsModal({
   const [showEmailSuccessPopup, setShowEmailSuccessPopup] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
 
-  // Replace your existing handleSendEmail function with this:
+  const handleSendEmail = async () => {
+    // Check if email exists in appointment data
+    if (!appointment?.patientEmail || appointment.patientEmail === "N/A") {
+      setEmailError(
+        "No email address found for this patient. Please add an email address to the patient details."
+      );
+      setTimeout(() => setEmailError(null), 5000);
+      return;
+    }
 
-const handleSendEmail = async () => {
-  // Check if email exists in appointment data
-  if (!appointment?.patientEmail || appointment.patientEmail === "N/A") {
-    setEmailError(
-      "No email address found for this patient. Please add an email address to the patient details."
-    );
-    setTimeout(() => setEmailError(null), 5000);
-    return;
-  }
+    setIsSendingEmail(true);
+    setEmailError(null);
+    setShowEmailSuccessPopup(false);
 
-  setIsSendingEmail(true);
-  setEmailError(null);
-  setShowEmailSuccessPopup(false);
+    try {
+      // Get the total amount
+      const totalAmount = appointment.total || appointment.amount || 0; // ✅ Remove appointment.total_amount
 
-  try {
-    // Get the total amount
-    const totalAmount = appointment.total || appointment.total_amount || appointment.amount || 0;
-    
-    // Calculate base price and refund deposit
-    // If basePrice and refundDeposit exist in appointment, use them
-    // Otherwise calculate: base price = total - refund deposit (if refund exists)
-    let basePrice = appointment.basePrice;
-    let refundDeposit = appointment.refundDeposit || 0;
-    
-    // If basePrice is not available, calculate it
-    if (!basePrice) {
-      // Check if there's a refund deposit
-      // Assuming refund deposit is around 250 if refund_eligible is true
-      if (appointment.refundEligible || appointment.refund_eligible) {
-        // You might need to adjust this logic based on your business rules
-        // For now, we'll calculate: basePrice = total - 250 (or use a percentage)
-        refundDeposit = 250; // or calculate based on percentage
-        basePrice = totalAmount - refundDeposit;
-      } else {
-        // No refund, so total is the base price
-        basePrice = totalAmount;
-        refundDeposit = 0;
+      // Calculate base price and refund deposit
+      let basePrice = appointment.basePrice;
+      let refundDeposit = appointment.refundDeposit || 0;
+
+      // If basePrice is not available, calculate it
+      if (!basePrice) {
+        if (appointment.refundEligible) {
+          // ✅ Remove appointment.refund_eligible
+          refundDeposit = 250;
+          basePrice = totalAmount - refundDeposit;
+        } else {
+          basePrice = totalAmount;
+          refundDeposit = 0;
+        }
       }
-    }
-    
-    const response = await fetch("/api/appointments/send-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: appointment.patientEmail,
-        appointmentDetails: {
-          appointmentId: appointment.appointmentId,
-          doctor: appointment.doctor,
-          specialization: appointment.specialization,
-          hospital: appointment.hospital,
-          date: appointment.date,
-          time: appointment.time,
-          patientName: appointment.patientName,
-          patientPhone: appointment.patientPhone,
-          patientNIC: appointment.patientNIC,
-          basePrice: basePrice,
-          refundDeposit: refundDeposit,
-          total: totalAmount,
-          status: currentStatus,
+
+      const response = await fetch("/api/appointments/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          email: appointment.patientEmail,
+          appointmentDetails: {
+            appointmentId: appointment.appointmentId,
+            doctor: appointment.doctor,
+            specialization: appointment.specialization,
+            hospital: appointment.hospital,
+            date: appointment.date,
+            time: appointment.time,
+            patientName: appointment.patientName,
+            patientPhone: appointment.patientPhone,
+            patientNIC: appointment.patientNIC,
+            basePrice: basePrice,
+            refundDeposit: refundDeposit,
+            total: totalAmount,
+            status: currentStatus,
+          },
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to send email");
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send email");
+      }
+
+      setIsSendingEmail(false);
+      setShowEmailSuccessPopup(true);
+
+      setTimeout(() => {
+        setShowEmailSuccessPopup(false);
+      }, 3000);
+    } catch (err: any) {
+      setIsSendingEmail(false);
+      setEmailError(err.message);
+      console.error("Error sending email:", err);
+
+      setTimeout(() => setEmailError(null), 5000);
     }
-
-    setIsSendingEmail(false);
-    setShowEmailSuccessPopup(true);
-
-    // Auto-hide success popup after 3 seconds
-    setTimeout(() => {
-      setShowEmailSuccessPopup(false);
-    }, 3000);
-  } catch (err: any) {
-    setIsSendingEmail(false);
-    setEmailError(err.message);
-    console.error("Error sending email:", err);
-
-    // Auto-hide error message after 5 seconds
-    setTimeout(() => setEmailError(null), 5000);
-  }
-};
+  };
 
   // Local state to track current appointment status
   const [currentStatus, setCurrentStatus] = useState(appointment?.status || "");
@@ -1269,14 +1259,15 @@ const downloadAsImage = async () => {
                       </span>
                     </div>
                   )}
-                  {appointment.refundDeposit > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-700">Refund Deposit:</span>
-                      <span className="font-semibold text-cyan-600">
-                        Rs. {appointment.refundDeposit}
-                      </span>
-                    </div>
-                  )}
+                  {appointment.refundDeposit &&
+                    appointment.refundDeposit > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700">Refund Deposit:</span>
+                        <span className="font-semibold text-cyan-600">
+                          Rs. {appointment.refundDeposit}
+                        </span>
+                      </div>
+                    )}
                   <div className="border-t border-blue-200 pt-3 mt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-gray-900">
@@ -1292,21 +1283,23 @@ const downloadAsImage = async () => {
             )}
 
             {/* Refund Eligibility */}
-            {appointment.refundEligible && appointment.refundDeposit > 0 && (
-              <div>
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-emerald-900">
-                      Refund Eligibility
-                    </p>
-                    <p className="text-sm text-emerald-800">
-                      {appointment.refundEligible}
-                    </p>
+            {appointment.refundEligible &&
+              appointment.refundDeposit &&
+              appointment.refundDeposit > 0 && (
+                <div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-emerald-900">
+                        Refund Eligibility
+                      </p>
+                      <p className="text-sm text-emerald-800">
+                        {appointment.refundEligible}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Patient Information */}
             <div>
@@ -1576,14 +1569,15 @@ const downloadAsImage = async () => {
                         Rs. {appointment.basePrice}
                       </span>
                     </div>
-                    {appointment.refundDeposit > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-700">Refund Deposit:</span>
-                        <span className="font-semibold">
-                          Rs. {appointment.refundDeposit}
-                        </span>
-                      </div>
-                    )}
+                    {appointment.refundDeposit &&
+                      appointment.refundDeposit > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">Refund Deposit:</span>
+                          <span className="font-semibold">
+                            Rs. {appointment.refundDeposit}
+                          </span>
+                        </div>
+                      )}
                     <div className="flex justify-between border-t-2 border-gray-300 pt-2 mt-2">
                       <span className="font-bold text-gray-900">Total:</span>
                       <span className="font-bold text-lg">
@@ -1594,16 +1588,18 @@ const downloadAsImage = async () => {
                 </div>
               )}
 
-              {appointment.refundEligible && appointment.refundDeposit > 0 && (
-                <div className="bg-gray-100 p-4 rounded-lg mb-6">
-                  <p className="font-semibold text-gray-900 mb-2">
-                    Refund Eligibility
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {appointment.refundEligible}
-                  </p>
-                </div>
-              )}
+              {appointment.refundEligible &&
+                appointment.refundDeposit &&
+                appointment.refundDeposit > 0 && (
+                  <div className="bg-gray-100 p-4 rounded-lg mb-6">
+                    <p className="font-semibold text-gray-900 mb-2">
+                      Refund Eligibility
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      {appointment.refundEligible}
+                    </p>
+                  </div>
+                )}
 
               <div className="text-center text-xs text-gray-500 border-t-2 border-gray-300 pt-4 mt-6">
                 <p>This is an electronically generated receipt</p>

@@ -18,6 +18,9 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "src/generated/**", // Add this line
+      "**/generated/**", // Alternative: ignore any generated folder
+      "**/*.generated.*", // Alternative: ignore any .generated. files
     ],
   },
 ];

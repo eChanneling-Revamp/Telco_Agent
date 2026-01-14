@@ -2,19 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, MapPin } from "lucide-react";
-
-type Doctor = {
-  id: number;
-  name: string;
-  specialty: string;
-  hospital: string;
-  hospitalType: "Private" | "Government";
-  city: string;
-  available: string;
-  availabilityId: number;
-  consultation_fee: number;
-  slotsAvailable: number;
-};
+import { Doctor } from "@/types/appointment";
 
 interface SearchDoctorProps {
   onNext: (doctor: Doctor) => void;
@@ -39,7 +27,22 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
       const response = await fetch(`/api/doctors?${params.toString()}`);
       const data = await response.json();
 
-      setDoctors(data.doctors || []);
+      // ✅ FIX: Ensure consultationFee is properly mapped
+      const mappedDoctors = (data.doctors || []).map((doc: any) => ({
+        id: doc.id,
+        name: doc.name,
+        specialty: doc.specialty,
+        hospital: doc.hospital,
+        hospitalType: doc.hospital_type || doc.hospitalType,
+        city: doc.city,
+        available: doc.available || "Available",
+        availabilityId: doc.availabilityId || 0,
+        consultationFee: Number(doc.consultation_fee || doc.consultationFee || 3000), // ✅ Handle both snake_case and camelCase
+        slotsAvailable: doc.slotsAvailable || 10,
+      }));
+
+      console.log("📋 Mapped doctors with fees:", mappedDoctors);
+      setDoctors(mappedDoctors);
       setShowResults(true);
     } catch (error) {
       console.error("Error fetching doctors:", error);
@@ -167,10 +170,13 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
 
                     <div className="text-right">
                       <p className="text-2xl font-bold text-blue-700">
-                        Rs. {doctor.consultation_fee}
+                        Rs. {doctor.consultationFee}
                       </p>
                       <button
-                        onClick={() => onNext(doctor)}
+                        onClick={() => {
+                          console.log("✅ Selected doctor:", doctor);
+                          onNext(doctor);
+                        }}
                         className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"
                       >
                         Select Doctor

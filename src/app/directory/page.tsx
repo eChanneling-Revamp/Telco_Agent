@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import dynamicImport from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import {
   FaPhoneAlt,
   FaMapMarkerAlt,
@@ -12,6 +11,27 @@ import {
 } from "react-icons/fa";
 import Sidebar from "@/components/dashboard/SideBar";
 import Header from "@/components/dashboard/Header";
+
+// Disable pre-rendering for this page
+export const dynamic = 'force-dynamic';
+
+// Dynamically import the Map component with no SSR
+const MapContainer = dynamicImport(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamicImport(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamicImport(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamicImport(
+  () => import("react-leaflet").then((mod) => mod.Popup),
+  { ssr: false }
+);
 
 interface Location {
   id: number;
@@ -57,21 +77,29 @@ const locations: Location[] = [
   },
 ];
 
-// Fix leaflet marker icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
-
 const DirectoryPage: React.FC = () => {
+  const [selectedAccount, setSelectedAccount] = useState<string>("default");
   const [filter, setFilter] = useState<"All" | "Hospital" | "Pharmacy">("All");
   const [selected, setSelected] = useState<Location | null>(locations[0]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  // Fix for Leaflet icons - only run on client
+  React.useEffect(() => {
+    setIsClient(true);
+    
+    // Fix leaflet marker icons
+    const L = require("leaflet");
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+      iconUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+      shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    });
+  }, []);
 
   const filteredLocations = locations.filter((loc) => {
     const matchesType = filter === "All" || loc.type === filter;
@@ -83,21 +111,14 @@ const DirectoryPage: React.FC = () => {
   });
 
   return (
-     <div
-      className="flex h-screen bg-[#eaeaea]"
-      // style={{
-      //   backgroundImage: `url('/assets/bg.png')`,
-      //   backgroundSize: "cover",
-      //   backgroundPosition: "center",
-      //   backgroundRepeat: "no-repeat",
-      // }}
-    >
+    <div className="flex h-screen bg-[#eaeaea]">
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        
-        
+        <Header
+          selectedAccount={selectedAccount}
+          onAccountChange={setSelectedAccount}
+        />
 
         <main className="flex-1 overflow-y-auto p-4 space-y-2">
           <div className="flex items-center gap-2 p-2 text-black">
@@ -118,7 +139,7 @@ const DirectoryPage: React.FC = () => {
                 className="w-full border border-gray-300 rounded-md p-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
               />
 
-              {/* Tabs styled like image */}
+              {/* Tabs */}
               <div className="flex gap-8 mb-4 border-b border-gray-200 pb-1">
                 {["All", "Hospitals", "Pharmacies"].map((tab) => {
                   const filterValue =
@@ -165,7 +186,6 @@ const DirectoryPage: React.FC = () => {
                       }`}
                       onClick={() => setSelected(loc)}
                     >
-                      {/* Header: Icon + Name */}
                       <div className="flex items-center gap-3 mb-1">
                         <div
                           className={`w-10 h-10 flex items-center justify-center rounded-full ${
@@ -175,13 +195,7 @@ const DirectoryPage: React.FC = () => {
                           }`}
                         >
                           {loc.type === "Hospital" ? (
-                            <FaHospital
-                              className={`text-lg ${
-                                loc.type === "Hospital"
-                                  ? "text-blue-600"
-                                  : "text-green-600"
-                              }`}
-                            />
+                            <FaHospital className="text-lg text-blue-600" />
                           ) : (
                             <FaPrescriptionBottleAlt className="text-lg text-green-600" />
                           )}
@@ -194,13 +208,11 @@ const DirectoryPage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Contact */}
                       <div className="flex items-center gap-1 text-xs text-gray-500 pl-12 mb-2">
                         <FaPhoneAlt className="text-[10px]" />
                         <span>{loc.contact}</span>
                       </div>
 
-                      {/* For Pharmacy show Open Hours instead of specialties */}
                       {loc.type === "Hospital" ? (
                         <div className="flex flex-wrap gap-2 pl-12 mb-2">
                           {["Cardiology", "Neurology", "Orthopedics"].map(
@@ -225,7 +237,6 @@ const DirectoryPage: React.FC = () => {
                         </div>
                       )}
 
-                      {/* View Details button */}
                       <div className="flex justify-end">
                         <button
                           className="text-blue-600 text-xs font-medium hover:underline"
@@ -257,16 +268,22 @@ const DirectoryPage: React.FC = () => {
 
                   {/* Map */}
                   <div className="h-60 w-full rounded-lg overflow-hidden mb-4 border border-gray-200">
-                    <MapContainer
-                      center={selected.position}
-                      zoom={15}
-                      style={{ height: "100%", width: "100%" }}
-                    >
-                      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                      <Marker position={selected.position}>
-                        <Popup>{selected.name}</Popup>
-                      </Marker>
-                    </MapContainer>
+                    {isClient ? (
+                      <MapContainer
+                        center={selected.position}
+                        zoom={15}
+                        style={{ height: "100%", width: "100%" }}
+                      >
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <Marker position={selected.position}>
+                          <Popup>{selected.name}</Popup>
+                        </Marker>
+                      </MapContainer>
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                        <p className="text-gray-500">Loading map...</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Info */}
@@ -307,9 +324,9 @@ const DirectoryPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Buttons (aligned right) */}
+                  {/* Buttons */}
                   <div className="flex justify-end gap-3 mt-5">
-                    <button className="flex items-center gap-2  bg-blue-900 text-white text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-blue-700 transition-all">
+                    <button className="flex items-center gap-2 bg-blue-900 text-white text-sm font-medium py-2 px-3 rounded-md shadow hover:bg-blue-700 transition-all">
                       <FaPhoneAlt className="text-xs" />
                       Call Now
                     </button>

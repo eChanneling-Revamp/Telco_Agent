@@ -11,7 +11,7 @@ interface AgentCardProps {
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, detailsHref }) => {
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string): 'success' | 'primary' | 'danger' | 'warning' => {
     switch (status) {
       case 'Active': return 'success';
       case 'Suspended': return 'danger';
@@ -20,7 +20,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, detailsHref }) => {
     }
   };
 
-  const getAccessVariant = (access: string) => {
+  const getAccessVariant = (access: string): 'success' | 'primary' | 'danger' | 'warning' => {
     return access === 'Full Access' ? 'primary' : 'primary';
   };
 
@@ -80,6 +80,3 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, detailsHref }) => {
     </div>
   );
 };
-
-
-

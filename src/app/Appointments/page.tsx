@@ -8,10 +8,11 @@ import MyAppointments from "../../components/ApointmentManagement/MyAppointments
 import AppointmentDetailsModal from "../../components/ApointmentManagement/AppointmentDetailsModal";
 
 export default function Page() {
+    const [selectedAccount, setSelectedAccount] = useState<string>("default");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [selectedDate, setSelectedDate] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState("Account 1");
+
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -145,7 +146,10 @@ export default function Page() {
     <div className="flex h-screen bg-[#eaeaea]">
       <Sidebar />
       <div className="flex-1 flex flex-col min-h-0">
-        <Header />
+        <Header
+          selectedAccount={selectedAccount}
+          onAccountChange={setSelectedAccount}
+        />
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           <div className="p-3 sm:p-4 md:p-6">

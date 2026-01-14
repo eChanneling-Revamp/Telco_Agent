@@ -618,9 +618,14 @@ const downloadAsImage = async () => {
     }, 'image/png', 1.0);
 
   } catch (error) {
-    console.error('Download error:', error);
-    alert('Failed to download image. Error: ' + error.message);
-  }
+  console.error('Download error:', error);
+
+  const message =
+    error instanceof Error ? error.message : 'Unknown error';
+
+  alert('Failed to download image. Error: ' + message);
+}
+
 };
   const downloadAsPdf = () => {
     if (receiptRef.current) {

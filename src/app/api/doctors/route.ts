@@ -9,6 +9,28 @@ export async function GET(request: NextRequest) {
     const hospitalType = searchParams.get("hospitalType") || "";
     const doctorId = searchParams.get("doctorId");
     const date = searchParams.get("date");
+    const getHospitalTypes = searchParams.get("getHospitalTypes");
+
+    // Return hospital types if requested
+    if (getHospitalTypes === "true") {
+      const types = await prisma.doctors.findMany({
+        distinct: ["hospital_type"],
+        select: {
+          hospital_type: true,
+        },
+      });
+
+      const hospitalTypes = types
+        .map((t) => t.hospital_type)
+        .filter((type) => type !== null && type !== undefined) as string[];
+
+      return NextResponse.json(
+        {
+          hospitalTypes: [...new Set(hospitalTypes)].sort(),
+        },
+        { status: 200 },
+      );
+    }
 
     // If doctorId and date are provided, return availability for that doctor
     if (doctorId && date) {
@@ -43,7 +65,7 @@ export async function GET(request: NextRequest) {
         {
           doctors: availabilityWithSlots,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -150,7 +172,7 @@ export async function GET(request: NextRequest) {
           hospitalType: doctor.hospital_type,
           city: doctor.city,
           consultation_fee: parseFloat(
-            doctor.consultation_fee?.toString() || "0"
+            doctor.consultation_fee?.toString() || "0",
           ),
           availability_slots: formattedSlots,
           total_slots_available: totalSlotsAvailable,
@@ -169,7 +191,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching doctors:", error);
     return NextResponse.json(
       { error: "Failed to fetch doctors", message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

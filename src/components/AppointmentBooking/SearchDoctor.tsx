@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, AlertCircle } from "lucide-react";
 import { Doctor } from "@/types/appointment";
 
 interface SearchDoctorProps {
@@ -15,9 +15,51 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [specializations, setSpecializations] = useState<string[]>([]);
+  const [hospitalTypes, setHospitalTypes] = useState<string[]>([]);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch specializations and hospital types on mount
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        setLoadingDropdowns(true);
+        setError("");
+
+        // Fetch specializations
+        const specResponse = await fetch("/api/specializations");
+        const specData = await specResponse.json();
+        if (specData.specializations) {
+          setSpecializations(specData.specializations);
+        }
+
+        // Fetch hospital types - using a query on doctors endpoint
+        const docResponse = await fetch("/api/doctors?getHospitalTypes=true");
+        const docData = await docResponse.json();
+        if (docData.hospitalTypes) {
+          setHospitalTypes(docData.hospitalTypes);
+        } else {
+          // Fallback if endpoint doesn't return hospitalTypes
+          setHospitalTypes(["Private", "Government"]);
+        }
+      } catch (err) {
+        console.error("Error fetching filters:", err);
+        setError("Failed to load search filters");
+        // Provide fallback values
+        setSpecializations([]);
+        setHospitalTypes(["Private", "Government"]);
+      } finally {
+        setLoadingDropdowns(false);
+      }
+    };
+
+    fetchFilters();
+  }, []);
 
   const handleSearch = async () => {
     setIsLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
@@ -27,25 +69,43 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
       const response = await fetch(`/api/doctors?${params.toString()}`);
       const data = await response.json();
 
-      // ✅ FIX: Ensure consultationFee is properly mapped
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch doctors");
+      }
+
       const mappedDoctors = (data.doctors || []).map((doc: any) => ({
         id: doc.id,
         name: doc.name,
         specialty: doc.specialty,
         hospital: doc.hospital,
-        hospitalType: doc.hospital_type || doc.hospitalType,
+        hospitalType: doc.hospitalType || doc.hospital_type,
         city: doc.city,
         available: doc.available || "Available",
-        availabilityId: doc.availabilityId || 0,
-        consultationFee: Number(doc.consultation_fee || doc.consultationFee || 3000), // ✅ Handle both snake_case and camelCase
-        slotsAvailable: doc.slotsAvailable || 10,
+        availabilityId:
+          doc.availabilityId ||
+          doc.availability_slots?.[0]?.availability_id ||
+          0,
+        consultationFee: Number(doc.consultation_fee || 3000),
+        slotsAvailable: doc.total_slots_available || doc.slotsAvailable || 10,
       }));
 
       console.log("📋 Mapped doctors with fees:", mappedDoctors);
-      setDoctors(mappedDoctors);
+
+      if (mappedDoctors.length === 0) {
+        setError(
+          "No doctors found matching your criteria. Please try different filters.",
+        );
+        setDoctors([]);
+      } else {
+        setDoctors(mappedDoctors);
+      }
+
       setShowResults(true);
     } catch (error) {
       console.error("Error fetching doctors:", error);
+      setError(
+        error instanceof Error ? error.message : "Error fetching doctors",
+      );
       setDoctors([]);
     } finally {
       setIsLoading(false);
@@ -74,6 +134,17 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
           Search by Doctor Name or Hospital
         </p>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <AlertCircle
+              size={18}
+              className="text-red-600 flex-shrink-0 mt-0.5"
+            />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
         {/* Search Input */}
         <input
           type="text"
@@ -89,28 +160,37 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
           <select
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loadingDropdowns}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
           >
-            <option value="">All Specialties</option>
-            <option value="Cardiologist">Cardiologist</option>
-            <option value="Dermatologist">Dermatologist</option>
-            <option value="Neurologist">Neurologist</option>
+            <option value="">
+              {loadingDropdowns ? "Loading specialties..." : "All Specialties"}
+            </option>
+            {specializations.map((spec) => (
+              <option key={spec} value={spec}>
+                {spec}
+              </option>
+            ))}
           </select>
 
           <select
             value={hospital}
             onChange={(e) => setHospital(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loadingDropdowns}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
           >
-            <option value="">All Hospitals</option>
-            <option value="Private">Private</option>
-            <option value="Government">Government</option>
+            <option value="">All Hospital Types</option>
+            {hospitalTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
           </select>
         </div>
 
         <button
           onClick={handleSearch}
-          disabled={isLoading}
+          disabled={isLoading || loadingDropdowns}
           className="w-full bg-blue-900 text-white py-3 rounded-lg font-medium hover:bg-blue-800 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Search size={20} />
@@ -124,7 +204,7 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => setShowResults(false)}
-              className="text-blue-900 font-medium"
+              className="text-blue-900 font-medium hover:underline"
             >
               ← Back to Search
             </button>
@@ -144,7 +224,7 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
               doctors.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -161,20 +241,23 @@ export default function SearchDoctor({ onNext }: SearchDoctorProps) {
                         </div>
                         <div className="flex items-center gap-1">
                           <span>{doctor.hospital}</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            {doctor.hospitalType}
+                          </span>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Experience: 10 years
-                      </p>
+                      {/* <p className="text-xs text-gray-400 mt-2">
+                        Available slots: {doctor.slotsAvailable}
+                      </p> */}
                     </div>
 
                     <div className="text-right">
                       <p className="text-2xl font-bold text-blue-700">
-                        Rs. {doctor.consultationFee}
+                        Rs. {doctor.consultationFee.toLocaleString()}
                       </p>
                       <button
                         onClick={() => {
-                          console.log("✅ Selected doctor:", doctor);
+                          console.log("Selected doctor:", doctor);
                           onNext(doctor);
                         }}
                         className="mt-4 bg-blue-900 text-white px-8 py-2 rounded-lg font-medium hover:bg-blue-800 transition"

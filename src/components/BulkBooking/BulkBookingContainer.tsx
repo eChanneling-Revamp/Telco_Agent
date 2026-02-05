@@ -10,6 +10,12 @@ type Doctor = {
   consultation_fee: number;
 };
 
+type TimeSlot = {
+  time: string;
+  available: boolean;
+  slotNumber: number;
+};
+
 export default function BulkBookingContainer({ cart, setCart }: any) {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showDoctorList, setShowDoctorList] = useState(true);
@@ -34,6 +40,14 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [availabilityInfo, setAvailabilityInfo] = useState<{
+    available: boolean;
+    selectedDay: string;
+    availableDays: string[];
+    message?: string;
+  } | null>(null);
 
   // Fetch doctors from backend
   useEffect(() => {
@@ -52,26 +66,221 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
     fetchDoctors();
   }, []);
 
+  // Fetch time slots when date and doctor are selected
+  useEffect(() => {
+    if (!appointmentDate || !selectedDoctor) {
+      setTimeSlots([]);
+      setSelectedTime(null);
+      setAvailabilityInfo(null);
+      return;
+    }
+
+    const fetchTimeSlots = async () => {
+      setLoadingSlots(true);
+      try {
+        const params = new URLSearchParams();
+        params.set("doctorId", String(selectedDoctor.id));
+        params.set("date", appointmentDate);
+
+        const response = await fetch(`/api/doctors?${params.toString()}`);
+        const data = await response.json();
+
+        // Check if doctor is available on this day
+        if (!data.available && data.availableDays) {
+          setAvailabilityInfo({
+            available: false,
+            selectedDay: data.selectedDay,
+            availableDays: data.availableDays,
+            message: data.message,
+          });
+          setTimeSlots([]);
+          setSelectedTime(null);
+          setLoadingSlots(false);
+          return;
+        }
+
+        if (data.doctors && data.doctors.length > 0) {
+          // Generate time slots based on max_appointments
+          const allSlots: TimeSlot[] = [];
+
+          data.doctors.forEach((availability: any) => {
+            const {
+              start_time,
+              end_time,
+              max_appointments,
+              booked_appointments,
+            } = availability;
+
+            if (start_time && end_time && max_appointments > 0) {
+              const slots = generateAppointmentSlots(
+                start_time,
+                end_time,
+                max_appointments,
+                booked_appointments || 0,
+              );
+              allSlots.push(...slots);
+            }
+          });
+
+          setTimeSlots(allSlots);
+          setAvailabilityInfo({
+            available: true,
+            selectedDay: data.selectedDay,
+            availableDays: [],
+          });
+        } else {
+          setTimeSlots([]);
+          setAvailabilityInfo({
+            available: false,
+            selectedDay: data.selectedDay || "",
+            availableDays: data.availableDays || [],
+            message: "No time slots available for this date",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching time slots:", error);
+        setTimeSlots([]);
+        setAvailabilityInfo({
+          available: false,
+          selectedDay: "",
+          availableDays: [],
+          message: "Error loading availability",
+        });
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchTimeSlots();
+  }, [appointmentDate, selectedDoctor]);
+
   const specialties = useMemo(
     () => ["All Specialties", ...new Set(doctors.map((d) => d.specialty))],
-    [doctors]
+    [doctors],
   );
 
   const hospitals = useMemo(
     () => ["All Hospitals", ...new Set(doctors.map((d) => d.hospital))],
-    [doctors]
+    [doctors],
   );
 
-  const timeSlots = [
-    "09:00 AM",
-    "10:00 AM",
-    "11:00 AM",
-    "12:00 PM",
-    "02:00 PM",
-    "03:00 PM",
-    "04:00 PM",
-    "05:00 PM",
-  ];
+  /**
+   * Generate appointment slots based on max_appointments
+   * Distributes appointments evenly across the time range
+   * Marks first booked_appointments slots as unavailable
+   */
+  const generateAppointmentSlots = (
+    startTime: string,
+    endTime: string,
+    maxAppointments: number,
+    bookedAppointments: number,
+  ): TimeSlot[] => {
+    const slots: TimeSlot[] = [];
+
+    try {
+      // Validate inputs
+      if (!startTime || !endTime || maxAppointments <= 0) {
+        console.error("Invalid inputs for slot generation:", {
+          startTime,
+          endTime,
+          maxAppointments,
+        });
+        return [];
+      }
+
+      // Parse start and end times - handle format like "09:00:00"
+      // Handle DateTime objects from Prisma
+      let startTimeStr = startTime;
+      let endTimeStr = endTime;
+
+      // If it's a DateTime object, extract just the time portion
+      if (typeof startTime === "string" && startTime.includes("T")) {
+        startTimeStr = startTime.split("T")[1];
+      }
+      if (typeof endTime === "string" && endTime.includes("T")) {
+        endTimeStr = endTime.split("T")[1];
+      }
+
+      const startParts = startTimeStr.split(":");
+      const endParts = endTimeStr.split(":");
+
+      if (startParts.length < 2 || endParts.length < 2) {
+        console.error("Invalid time format:", { startTimeStr, endTimeStr });
+        return [];
+      }
+
+      const startHour = parseInt(startParts[0], 10);
+      const startMin = parseInt(startParts[1], 10);
+      const endHour = parseInt(endParts[0], 10);
+      const endMin = parseInt(endParts[1], 10);
+
+      // Validate parsed values
+      if (
+        isNaN(startHour) ||
+        isNaN(startMin) ||
+        isNaN(endHour) ||
+        isNaN(endMin)
+      ) {
+        console.error("Failed to parse time values:", {
+          startHour,
+          startMin,
+          endHour,
+          endMin,
+          original: { startTime, endTime },
+        });
+        return [];
+      }
+
+      // Calculate total minutes in the time range
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      const totalMinutes = endMinutes - startMinutes;
+
+      if (totalMinutes <= 0) {
+        console.error("Invalid time range:", { startMinutes, endMinutes });
+        return [];
+      }
+
+      // Calculate time interval between appointments (in minutes)
+      const intervalMinutes = Math.floor(totalMinutes / maxAppointments);
+
+      if (intervalMinutes <= 0) {
+        console.error("Invalid interval minutes:", intervalMinutes);
+        return [];
+      }
+
+      // Generate slots
+      for (let i = 0; i < maxAppointments; i++) {
+        const slotMinutes = startMinutes + i * intervalMinutes;
+        const slotHour = Math.floor(slotMinutes / 60);
+        const slotMin = slotMinutes % 60;
+
+        // Convert to 12-hour format
+        const ampm = slotHour >= 12 ? "PM" : "AM";
+        const displayHour = slotHour % 12 || 12;
+
+        // Ensure proper formatting with padding
+        const timeString = `${displayHour}:${String(slotMin).padStart(2, "0")} ${ampm}`;
+
+        slots.push({
+          time: timeString,
+          available: i >= bookedAppointments, // First bookedAppointments slots are unavailable
+          slotNumber: i + 1,
+        });
+      }
+
+      return slots;
+    } catch (error) {
+      console.error("Error generating appointment slots:", error);
+      return [];
+    }
+  };
+
+  // Get day name from date
+  const getDayName = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { weekday: "long" });
+  };
 
   const filtered = doctors.filter((d) => {
     if (specialty !== "All Specialties" && d.specialty !== specialty)
@@ -442,29 +651,109 @@ export default function BulkBookingContainer({ cart, setCart }: any) {
           min={new Date().toISOString().split("T")[0]}
           className="border border-gray-300 rounded-xl w-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {appointmentDate && (
+          <p className="text-sm text-gray-600 mt-2">
+            Selected: {getDayName(appointmentDate)}
+          </p>
+        )}
       </div>
+
+      {/* Availability Message */}
+      {availabilityInfo && !availabilityInfo.available && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="font-medium text-amber-900 mb-2">
+                {availabilityInfo.message ||
+                  `Doctor not available on ${availabilityInfo.selectedDay}`}
+              </p>
+              {availabilityInfo.availableDays.length > 0 && (
+                <div>
+                  <p className="text-sm text-amber-800 mb-2">
+                    This doctor is available on:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {availabilityInfo.availableDays.map((day) => (
+                      <span
+                        key={day}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-white border border-amber-300 rounded-md text-sm text-amber-900"
+                      >
+                        {day}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {appointmentDate && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             Select Time Slot
           </label>
-          <div className="grid grid-cols-4 gap-3">
-            {timeSlots.map((time) => (
-              <button
-                key={time}
-                onClick={() => {
-                  setSelectedTime(time);
-                  setShowBookingForm(true);
-                }}
-                className="border border-gray-300 rounded-xl py-3 text-sm font-medium hover:bg-blue-50 hover:border-blue-400 transition-all"
-              >
-                {time}
-              </button>
-            ))}
-          </div>
+          {loadingSlots ? (
+            <div className="text-center py-8 text-gray-500">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mb-2"></div>
+              <p>Loading appointment slots...</p>
+            </div>
+          ) : timeSlots.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+              <p>No appointment slots available for this date</p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  Total Slots: {timeSlots.length}
+                </span>
+                <span className="text-gray-600">
+                  Available:{" "}
+                  <span className="font-semibold text-green-600">
+                    {timeSlots.filter((s) => s.available).length}
+                  </span>{" "}
+                  | Booked:{" "}
+                  <span className="font-semibold text-red-600">
+                    {timeSlots.filter((s) => !s.available).length}
+                  </span>
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {timeSlots.map((time) => (
+                  <button
+                    key={`${time.time}-${time.slotNumber}`}
+                    onClick={() => {
+                      setSelectedTime(time.time);
+                      setShowBookingForm(true);
+                    }}
+                    disabled={!time.available}
+                    className={`border rounded-xl py-3 text-sm font-medium transition-all ${
+                      selectedTime === time.time
+                        ? "border-teal-400 bg-teal-400 text-white"
+                        : time.available
+                          ? "border-teal-400 hover:bg-teal-100 hover:border-teal-400 text-gray-700 bg-teal-50"
+                          : "border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <span className="whitespace-nowrap">{time.time}</span>
+                      {!time.available && (
+                        <span className="text-xs text-red-500 font-medium">
+                          Booked
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+/* Remove the old section below */

@@ -98,12 +98,12 @@ const LoginPage = () => {
               <Image
                 src="/assets/logo.png"
                 alt="Logo"
-                width={220}
+                width={300}
                 height={100}
                 className="mx-auto "
               />
             </div>
-            <p className="text-gray-500 text-sm">Connecting Healthcare</p>
+            <p className="text-gray-500 text-sm">Agent Portal</p>
           </div>
           <div className="space-y-5">
             <div>
@@ -227,7 +227,7 @@ const LoginPage = () => {
                 "Sign in"
               )}
             </button>
-            <div className="mt-6 text-center text-sm flex items-center justify-center gap-1">
+            <div className="mt-2 text-center text-sm flex items-center justify-center gap-1">
               <p className="text-gray-600">Are you an admin?</p>
               <button
                 onClick={() => router.push("/admin/login")}
@@ -237,12 +237,12 @@ const LoginPage = () => {
               </button>
             </div>
 
-            <div className="mt-8 text-center text-xs text-gray-500">
+            <div className="mt-2 text-center text-xs text-gray-500">
               © 2025 Sri Lanka Telecom - eChannelling
             </div>
-            <div className="mt-8 text-center text-xs text-gray-500">
+            {/* <div className="mt-8 text-center text-xs text-gray-500">
               Use: test@example.com / password123 to login
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

@@ -109,17 +109,17 @@ const AdminLoginPage = () => {
     <div className="flex h-screen bg-[#eaeaea]">
       <div className="flex-1 flex flex-col justify-center items-center">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
+          <div className="text-center mb-8 ">
+            <div className="flex items-center justify-center  gap-2 mb-2">
               <Image
                 src="/assets/logo.png"
                 alt="Logo"
-                width={220}
+                width={300}
                 height={100}
                 className="mx-auto "
               />{" "}
             </div>
-            <p className="text-gray-500 text-sm">Admin Portal</p>
+            <p className="text-gray-500 text-sm ">Admin Portal</p>
           </div>
           <div className="space-y-5">
             <div>
@@ -243,7 +243,7 @@ const AdminLoginPage = () => {
                 "Sign in"
               )}
             </button>
-            <div className="mt-6 text-center text-sm flex items-center justify-center gap-1">
+            <div className="mt-2 text-center text-sm flex items-center justify-center gap-1">
               <p className="text-gray-600">Are you an agent?</p>
               <button
                 onClick={() => router.push("/login")}
@@ -253,7 +253,7 @@ const AdminLoginPage = () => {
               </button>
             </div>
 
-            <div className="mt-8 text-center text-xs text-gray-500">
+            <div className="mt-2 text-center text-xs text-gray-500">
               © 2025 Sri Lanka Telecom - eChannelling
             </div>
             {/* <div className="mt-8 text-center text-xs text-gray-500">

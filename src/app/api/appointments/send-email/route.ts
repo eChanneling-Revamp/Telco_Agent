@@ -9,9 +9,20 @@ export async function POST(req: NextRequest) {
     if (!email || !appointmentDetails) {
       return NextResponse.json(
         { error: "Email and appointment details required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
+    // Validate environment variables
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error("Missing Gmail credentials in environment variables");
+      return NextResponse.json(
+        { error: "Email service not configured" },
+        { status: 500 },
+      );
+    }
+
+    console.log(" Attempting to send email to:", email);
 
     // Create transporter
     const transporter = nodemailer.createTransport({
@@ -20,29 +31,29 @@ export async function POST(req: NextRequest) {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD,
       },
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
     });
 
     // Get status badge styling
-  const getStatusBadge = (status: string) => {
-  const normalizedStatus = status?.toLowerCase() as
-    | "confirmed"
-    | "cancelled"
-    | "pending"
-    | "completed";
+    const getStatusBadge = (status: string) => {
+      const normalizedStatus = status?.toLowerCase() as
+        | "confirmed"
+        | "cancelled"
+        | "pending"
+        | "completed";
 
-  const statusStyles = {
-    confirmed: { bg: "#10b981", text: "Confirmed" },
-    cancelled: { bg: "#ef4444", text: "Cancelled" },
-    pending: { bg: "#f59e0b", text: "Pending" },
-    completed: { bg: "#3b82f6", text: "Completed" },
-  };
+      const statusStyles = {
+        confirmed: { bg: "#10b981", text: "Confirmed" },
+        cancelled: { bg: "#ef4444", text: "Cancelled" },
+        pending: { bg: "#f59e0b", text: "Pending" },
+        completed: { bg: "#3b82f6", text: "Completed" },
+      };
 
-  const style =
-    statusStyles[normalizedStatus] || statusStyles.confirmed;
+      const style = statusStyles[normalizedStatus] || statusStyles.confirmed;
 
-  return `<span style="display: inline-block; background: ${style.bg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${style.text}</span>`;
-};
-
+      return `<span style="display: inline-block; background: ${style.bg}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;">${style.text}</span>`;
+    };
 
     // Email content
     const mailOptions = {
@@ -340,14 +351,22 @@ export async function POST(req: NextRequest) {
       messageId: info.messageId,
     });
   } catch (error: any) {
-    console.error("❌ Email error:", error);
+    console.error("❌ Email error:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+      stack: error.stack,
+    });
 
     return NextResponse.json(
       {
         error: error.message || "Failed to send email",
         details: error.code,
+        responseCode: error.responseCode,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

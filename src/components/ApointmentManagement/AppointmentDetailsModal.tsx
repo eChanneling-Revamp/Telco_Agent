@@ -1,5 +1,5 @@
 "use client";
-import html2canvas from 'html2canvas';
+import html2canvas from "html2canvas";
 
 import {
   X,
@@ -59,7 +59,7 @@ export default function AppointmentDetailsModal({
     // Check if email exists in appointment data
     if (!appointment?.patientEmail || appointment.patientEmail === "N/A") {
       setEmailError(
-        "No email address found for this patient. Please add an email address to the patient details."
+        "No email address found for this patient. Please add an email address to the patient details.",
       );
       setTimeout(() => setEmailError(null), 5000);
       return;
@@ -168,22 +168,23 @@ export default function AppointmentDetailsModal({
     return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
   };
 
-// වඩාත්ම reliable method - PDF එකේ style එකම image එකටත් ගන්නවා
-const downloadAsImage = async () => {
-  if (!receiptRef.current) {
-    alert('Receipt not found!');
-    return;
-  }
+  // වඩාත්ම reliable method - PDF එකේ style එකම image එකටත් ගන්නවා
+  const downloadAsImage = async () => {
+    if (!receiptRef.current) {
+      alert("Receipt not found!");
+      return;
+    }
 
-  try {
-    // Loading message
-    const loadingMsg = document.createElement('div');
-    loadingMsg.textContent = 'Generating image...';
-    loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif;';
-    document.body.appendChild(loadingMsg);
+    try {
+      // Loading message
+      const loadingMsg = document.createElement("div");
+      loadingMsg.textContent = "Generating image...";
+      loadingMsg.style.cssText =
+        "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif;";
+      document.body.appendChild(loadingMsg);
 
-    // PDF එකේ HTML එක ගන්නවා (එකම style එක)
-    const receiptHTML = `
+      // PDF එකේ HTML එක ගන්නවා (එකම style එක)
+      const receiptHTML = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -461,12 +462,12 @@ const downloadAsImage = async () => {
                   <div class="info-item">
                     <div class="info-label">Doctor</div>
                     <div class="info-value">${appointment.doctor}</div>
-                    ${appointment.specialization ? `<div style="font-size: 10px; color: #6b7280; margin-top: 2px;">${appointment.specialization}</div>` : ''}
+                    ${appointment.specialization ? `<div style="font-size: 10px; color: #6b7280; margin-top: 2px;">${appointment.specialization}</div>` : ""}
                   </div>
                   
                   <div class="info-item">
                     <div class="info-label">Hospital</div>
-                    <div class="info-value">${appointment.hospital || 'N/A'}</div>
+                    <div class="info-value">${appointment.hospital || "N/A"}</div>
                   </div>
                   
                   <div class="info-item">
@@ -476,12 +477,14 @@ const downloadAsImage = async () => {
                   
                   <div class="info-item">
                     <div class="info-label">Time</div>
-                    <div class="info-value">${appointment.time || 'N/A'}</div>
+                    <div class="info-value">${appointment.time || "N/A"}</div>
                   </div>
                 </div>
               </div>
               
-              ${appointment.basePrice ? `
+              ${
+                appointment.basePrice
+                  ? `
               <div class="section">
                 <h3 class="section-title">Pricing Breakdown</h3>
                 <div class="pricing-box">
@@ -489,12 +492,16 @@ const downloadAsImage = async () => {
                     <span class="label">Base Price:</span>
                     <span class="value">Rs. ${appointment.basePrice}</span>
                   </div>
-                  ${(appointment.refundDeposit ?? 0) > 0 ? `
+                  ${
+                    (appointment.refundDeposit ?? 0) > 0
+                      ? `
   <div class="pricing-row">
     <span class="label">Refund Deposit:</span>
     <span class="value">Rs. ${appointment.refundDeposit}</span>
   </div>
-` : ``}
+`
+                      : ``
+                  }
 
                   <div class="pricing-row total">
                     <span class="label">Total Amount:</span>
@@ -502,14 +509,21 @@ const downloadAsImage = async () => {
                   </div>
                 </div>
               </div>
-              ` : ''}
+              `
+                  : ""
+              }
               
-              ${appointment.refundEligible && (appointment.refundDeposit ?? 0) > 0 ? `
+              ${
+                appointment.refundEligible &&
+                (appointment.refundDeposit ?? 0) > 0
+                  ? `
   <div class="refund-notice">
     <h4>✓ Refund Eligibility</h4>
     <p>${appointment.refundEligible}</p>
   </div>
-` : ''}
+`
+                  : ""
+              }
 
               
               <div class="section">
@@ -517,37 +531,37 @@ const downloadAsImage = async () => {
                 <div class="patient-grid">
                   <div class="patient-item">
                     <div class="info-label">Patient Name</div>
-                    <div class="info-value">${appointment.patientName || 'N/A'}</div>
+                    <div class="info-value">${appointment.patientName || "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">Mobile Number</div>
-                    <div class="info-value">${appointment.patientPhone || 'N/A'}</div>
+                    <div class="info-value">${appointment.patientPhone || "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">Email Address</div>
-                    <div class="info-value" style="word-break: break-all; font-size: 10px;">${appointment.patientEmail || 'N/A'}</div>
+                    <div class="info-value" style="word-break: break-all; font-size: 10px;">${appointment.patientEmail || "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">NIC Number</div>
-                    <div class="info-value">${appointment.patientNIC || 'N/A'}</div>
+                    <div class="info-value">${appointment.patientNIC || "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">Date of Birth</div>
-                    <div class="info-value">${appointment.patientDOB || 'N/A'}</div>
+                    <div class="info-value">${appointment.patientDOB || "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">Gender</div>
-                    <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : 'N/A'}</div>
+                    <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : "N/A"}</div>
                   </div>
                   
                   <div class="patient-item">
                     <div class="info-label">Age</div>
-                    <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : 'N/A'}</div>
+                    <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : "N/A"}</div>
                   </div>
                 </div>
               </div>
@@ -556,7 +570,7 @@ const downloadAsImage = async () => {
             <div class="receipt-footer">
               <div class="footer-logo">Healthcare Appointment System</div>
               <p>This is an electronically generated receipt</p>
-              <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</p>
+              <p>Generated on: ${new Date().toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}</p>
               <p style="margin-top: 12px; font-style: italic;">Thank you for choosing our services</p>
             </div>
           </div>
@@ -564,69 +578,71 @@ const downloadAsImage = async () => {
       </html>
     `;
 
-    // New window එකක් open කරලා HTML එක load කරනවා
-    const newWindow = window.open('', '_blank', 'width=800,height=1000');
-    if (!newWindow) {
-      throw new Error('Could not open new window. Please allow pop-ups.');
-    }
-
-    newWindow.document.write(receiptHTML);
-    newWindow.document.close();
-
-    // Window එක load වෙනකන් wait කරනවා
-    await new Promise(resolve => {
-      newWindow.onload = resolve;
-      setTimeout(resolve, 1000);
-    });
-
-    // html2canvas භාවිතා කරලා capture කරනවා
-    const canvas = await html2canvas(newWindow.document.body, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      windowWidth: 794, // A4 width in pixels (210mm)
-      windowHeight: 1123, // A4 height in pixels (297mm)
-    });
-
-    // Window එක close කරනවා
-    newWindow.close();
-
-    // Canvas එක PNG බවට convert කරනවා
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Receipt_${appointment.appointmentId || Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        // Remove loading message
-        document.body.removeChild(loadingMsg);
-        
-        // Success message
-        const successMsg = document.createElement('div');
-        successMsg.textContent = '✓ Receipt downloaded as PNG!';
-        successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
-        document.body.appendChild(successMsg);
-        setTimeout(() => document.body.removeChild(successMsg), 3000);
+      // New window එකක් open කරලා HTML එක load කරනවා
+      const newWindow = window.open("", "_blank", "width=800,height=1000");
+      if (!newWindow) {
+        throw new Error("Could not open new window. Please allow pop-ups.");
       }
-    }, 'image/png', 1.0);
 
-  } catch (error) {
-  console.error('Download error:', error);
+      newWindow.document.write(receiptHTML);
+      newWindow.document.close();
 
-  const message =
-    error instanceof Error ? error.message : 'Unknown error';
+      // Window එක load වෙනකන් wait කරනවා
+      await new Promise((resolve) => {
+        newWindow.onload = resolve;
+        setTimeout(resolve, 1000);
+      });
 
-  alert('Failed to download image. Error: ' + message);
-}
+      // html2canvas භාවිතා කරලා capture කරනවා
+      const canvas = await html2canvas(newWindow.document.body, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        windowWidth: 794, // A4 width in pixels (210mm)
+        windowHeight: 1123, // A4 height in pixels (297mm)
+      });
 
-};
+      // Window එක close කරනවා
+      newWindow.close();
+
+      // Canvas එක PNG බවට convert කරනවා
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `Receipt_${appointment.appointmentId || Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            // Remove loading message
+            document.body.removeChild(loadingMsg);
+
+            // Success message
+            const successMsg = document.createElement("div");
+            successMsg.textContent = "✓ Receipt downloaded as PNG!";
+            successMsg.style.cssText =
+              "position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.1);";
+            document.body.appendChild(successMsg);
+            setTimeout(() => document.body.removeChild(successMsg), 3000);
+          }
+        },
+        "image/png",
+        1.0,
+      );
+    } catch (error) {
+      console.error("Download error:", error);
+
+      const message = error instanceof Error ? error.message : "Unknown error";
+
+      alert("Failed to download image. Error: " + message);
+    }
+  };
   const downloadAsPdf = () => {
     if (receiptRef.current) {
       const printWindow = window.open("", "", "width=900,height=700");
@@ -949,12 +965,12 @@ const downloadAsImage = async () => {
                       <div class="info-item">
                         <div class="info-label">Doctor</div>
                         <div class="info-value">${appointment.doctor}</div>
-                        ${appointment.specialization ? `<div style="font-size: 13px; color: #6b7280; margin-top: 4px;">${appointment.specialization}</div>` : ''}
+                        ${appointment.specialization ? `<div style="font-size: 13px; color: #6b7280; margin-top: 4px;">${appointment.specialization}</div>` : ""}
                       </div>
                       
                       <div class="info-item">
                         <div class="info-label">Hospital</div>
-                        <div class="info-value">${appointment.hospital || 'N/A'}</div>
+                        <div class="info-value">${appointment.hospital || "N/A"}</div>
                       </div>
                       
                       <div class="info-item">
@@ -964,12 +980,14 @@ const downloadAsImage = async () => {
                       
                       <div class="info-item">
                         <div class="info-label">Time</div>
-                        <div class="info-value">${appointment.time || 'N/A'}</div>
+                        <div class="info-value">${appointment.time || "N/A"}</div>
                       </div>
                     </div>
                   </div>
                   
-                  ${appointment.basePrice ? `
+                  ${
+                    appointment.basePrice
+                      ? `
                   <div class="section">
                     <h3 class="section-title">Pricing Breakdown</h3>
                     <div class="pricing-box">
@@ -977,12 +995,16 @@ const downloadAsImage = async () => {
                         <span class="label">Base Price:</span>
                         <span class="value">Rs. ${appointment.basePrice}</span>
                       </div>
-                      ${(appointment.refundDeposit ?? 0) > 0 ? `
+                      ${
+                        (appointment.refundDeposit ?? 0) > 0
+                          ? `
   <div class="pricing-row">
     <span class="label">Refund Deposit:</span>
     <span class="value">Rs. ${appointment.refundDeposit}</span>
   </div>
-` : ''}
+`
+                          : ""
+                      }
 
                       <div class="pricing-row total">
                         <span class="label">Total Amount:</span>
@@ -990,14 +1012,21 @@ const downloadAsImage = async () => {
                       </div>
                     </div>
                   </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
-                  ${appointment.refundEligible && (appointment.refundDeposit ?? 0) > 0 ? `
+                  ${
+                    appointment.refundEligible &&
+                    (appointment.refundDeposit ?? 0) > 0
+                      ? `
   <div class="refund-notice">
     <h4>✓ Refund Eligibility</h4>
     <p>${appointment.refundEligible}</p>
   </div>
-` : ''}
+`
+                      : ""
+                  }
 
                   
                   <div class="section">
@@ -1005,46 +1034,46 @@ const downloadAsImage = async () => {
                     <div class="patient-grid">
                       <div class="patient-item">
                         <div class="info-label">Patient Name</div>
-                        <div class="info-value">${appointment.patientName || 'N/A'}</div>
+                        <div class="info-value">${appointment.patientName || "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">Mobile Number</div>
-                        <div class="info-value">${appointment.patientPhone || 'N/A'}</div>
+                        <div class="info-value">${appointment.patientPhone || "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">Email Address</div>
-                        <div class="info-value" style="word-break: break-all;">${appointment.patientEmail || 'N/A'}</div>
+                        <div class="info-value" style="word-break: break-all;">${appointment.patientEmail || "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">NIC Number</div>
-                        <div class="info-value">${appointment.patientNIC || 'N/A'}</div>
+                        <div class="info-value">${appointment.patientNIC || "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">Date of Birth</div>
-                        <div class="info-value">${appointment.patientDOB || 'N/A'}</div>
+                        <div class="info-value">${appointment.patientDOB || "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">Gender</div>
-                        <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : 'N/A'}</div>
+                        <div class="info-value">${appointment.patientGender ? appointment.patientGender.charAt(0).toUpperCase() + appointment.patientGender.slice(1) : "N/A"}</div>
                       </div>
                       
                       <div class="patient-item">
                         <div class="info-label">Age</div>
-                        <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : 'N/A'}</div>
+                        <div class="info-value">${appointment.patientAge ? `${appointment.patientAge} years` : "N/A"}</div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
                 <div class="receipt-footer">
-                  <div class="footer-logo">Healthcare Appointment System</div>
+                  <div class="footer-logo">ECahnnelling Appointment System</div>
                   <p>This is an electronically generated receipt</p>
-                  <p>Generated on: ${new Date().toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                  <p>Generated on: ${new Date().toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}</p>
                   <p style="margin-top: 12px; font-style: italic;">Thank you for choosing our services</p>
                 </div>
               </div>
@@ -1204,7 +1233,7 @@ const downloadAsImage = async () => {
                   <p className="text-sm text-gray-600 mb-1">Status</p>
                   <span
                     className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(
-                      currentStatus
+                      currentStatus,
                     )}`}
                   >
                     {getStatusLabel(currentStatus)}

@@ -71,7 +71,7 @@ export default function AppointmentDetailsModal({
 
     try {
       // Get the total amount
-      const totalAmount = appointment.total || appointment.amount || 0; // ✅ Remove appointment.total_amount
+      const totalAmount = appointment.total || appointment.amount || 0; //Remove appointment.total_amount
 
       // Calculate base price and refund deposit
       let basePrice = appointment.basePrice;
@@ -80,7 +80,7 @@ export default function AppointmentDetailsModal({
       // If basePrice is not available, calculate it
       if (!basePrice) {
         if (appointment.refundEligible) {
-          // ✅ Remove appointment.refund_eligible
+          // Remove appointment.refund_eligible
           refundDeposit = 250;
           basePrice = totalAmount - refundDeposit;
         } else {
@@ -168,7 +168,6 @@ export default function AppointmentDetailsModal({
     return normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
   };
 
-  // වඩාත්ම reliable method - PDF එකේ style එකම image එකටත් ගන්නවා
   const downloadAsImage = async () => {
     if (!receiptRef.current) {
       alert("Receipt not found!");
@@ -183,7 +182,6 @@ export default function AppointmentDetailsModal({
         "position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 8px; z-index: 9999; font-family: sans-serif;";
       document.body.appendChild(loadingMsg);
 
-      // PDF එකේ HTML එක ගන්නවා (එකම style එක)
       const receiptHTML = `
       <!DOCTYPE html>
       <html>
@@ -578,7 +576,6 @@ export default function AppointmentDetailsModal({
       </html>
     `;
 
-      // New window එකක් open කරලා HTML එක load කරනවා
       const newWindow = window.open("", "_blank", "width=800,height=1000");
       if (!newWindow) {
         throw new Error("Could not open new window. Please allow pop-ups.");
@@ -587,13 +584,11 @@ export default function AppointmentDetailsModal({
       newWindow.document.write(receiptHTML);
       newWindow.document.close();
 
-      // Window එක load වෙනකන් wait කරනවා
       await new Promise((resolve) => {
         newWindow.onload = resolve;
         setTimeout(resolve, 1000);
       });
 
-      // html2canvas භාවිතා කරලා capture කරනවා
       const canvas = await html2canvas(newWindow.document.body, {
         scale: 2,
         useCORS: true,
@@ -604,10 +599,8 @@ export default function AppointmentDetailsModal({
         windowHeight: 1123, // A4 height in pixels (297mm)
       });
 
-      // Window එක close කරනවා
       newWindow.close();
 
-      // Canvas එක PNG බවට convert කරනවා
       canvas.toBlob(
         (blob) => {
           if (blob) {

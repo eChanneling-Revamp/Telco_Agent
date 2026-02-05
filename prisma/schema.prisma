@@ -68,8 +68,9 @@ model doctor_availability {
   is_active           Boolean?            @default(true)
   max_appointments    Int?                @default(10)
   availability_date   DateTime?           @db.Date
+  availability_days   String?             // JSON array: ["Monday", "Tuesday", ...]
   appointment_slots   appointment_slots[]
-  doctors             doctors             @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction) // ADD THIS LINE
+  doctors             doctors             @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([doctor_id, availability_date, is_active], map: "idx_doctor_availability_date")
 }
